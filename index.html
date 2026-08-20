@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ระบบติดตามแฟ้มเอกสาร</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+<div id="connStatus" class="conn-status" hidden></div>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-left">
+      <div class="brand-mark">📋</div>
+      <div class="brand-text">
+        <h1>ระบบติดตามแฟ้มเอกสาร</h1>
+      </div>
+    </div>
+    <div class="topbar-nav">
+      <button class="nav-btn active" data-page="dashboard">Dashboard</button>
+      <button class="nav-btn" data-page="add-file">+ เพิ่มแฟ้มใหม่</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ Dashboard Page ============ -->
+<div id="dashboard-page" class="page active">
+  <div class="stats-row">
+    <div class="stat-card total">
+      <div class="stat-num" id="statTotal">0</div>
+      <div class="stat-label">แฟ้มทั้งหมด</div>
+    </div>
+    <div class="stat-card pending">
+      <div class="stat-num" id="statPending">0</div>
+      <div class="stat-label">รอรับลงมา</div>
+    </div>
+    <div class="stat-card done">
+      <div class="stat-num" id="statDone">0</div>
+      <div class="stat-label">เสร็จสิ้น</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <div class="search-bar">
+        <span class="search-icon">🔎</span>
+        <input type="text" class="search-input" id="searchInput" placeholder="ค้นหาชื่อแฟ้ม, รายละเอียด หรือวันที่/เดือน/ปี..." />
+        <button class="search-clear-btn" id="searchClearBtn" type="button" aria-label="ล้างคำค้นหา">✕</button>
+      </div>
+      <div class="filter-tabs">
+        <button class="filter-tab active" data-filter="all">ทั้งหมด <span class="count" id="countAll">0</span></button>
+        <button class="filter-tab" data-filter="pending">รอรับลงมา <span class="count" id="countPending">0</span></button>
+        <button class="filter-tab" data-filter="done">เสร็จสิ้น <span class="count" id="countDone">0</span></button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="ledger-list" id="fileList"></div>
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">📂</div>
+        <h3 class="empty-title" id="emptyTitle">ยังไม่มีแฟ้มในระบบ</h3>
+        <p class="empty-text" id="emptyText">กดปุ่ม "เพิ่มแฟ้มใหม่" เพื่อเริ่มติดตามแฟ้มเอกสารของคุณ</p>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ Add File Page ============ -->
+<div id="add-file-page" class="page">
+  <div class="panel">
+    <div class="panel-header">เพิ่มแฟ้มใหม่</div>
+    <div class="panel-body">
+      <form id="addFileForm">
+        <div class="form-group">
+          <label class="form-label">ชื่อเรื่องหรือชื่อแฟ้ม</label>
+          <input type="text" id="titleInput" class="form-input" placeholder="เช่น คำร้องขอ กำหนดการ ใบรับรอง ฯลฯ" maxlength="120" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">รายละเอียดเพิ่มเติม (ไม่บังคับ)</label>
+          <textarea id="descInput" class="form-textarea" placeholder="เพิ่มรายละเอียดอื่นๆ เช่น ผู้มอบ ตำแหน่ง ฯลฯ" maxlength="300"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">แนบรูป (ไม่บังคับ)</label>
+          <div class="photo-upload-box" id="photoUploadBox">
+            <div class="upload-icon">📸</div>
+            <p class="upload-text">คลิกหรือวางรูปภาพ</p>
+            <p class="upload-hint">รองรับ JPG, PNG (สูงสุด 5MB)</p>
+            <input type="file" id="photoInput" accept="image/jpeg,image/png" />
+          </div>
+          <div class="photo-preview" id="photoPreview">
+            <img class="preview-img" id="previewImg" alt="ตัวอย่างรูป" />
+            <p class="preview-name" id="previewName"></p>
+            <button type="button" class="remove-photo-btn" id="removePhotoBtn">ลบรูป</button>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="submitBtn">บันทึกแฟ้มใหม่</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox">
+  <div class="lightbox-content">
+    <button class="lightbox-close" id="lightboxClose">✕</button>
+    <img class="lightbox-img" id="lightboxImg" alt="" />
+  </div>
+</div>
+
+<script type="module" src="./script.js"></script>
+</body>
+</html>
