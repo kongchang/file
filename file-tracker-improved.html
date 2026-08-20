@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ระบบติดตามแฟ้มเอกสาร</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #F3F4F7;
+    --surface: #FFFFFF;
+    --surface-alt: #F8F9FB;
+    --border: #E1E4EA;
+    --border-strong: #C7CCD6;
+    --navy: #142440;
+    --navy-soft: #26385C;
+    --text-primary: #1A2233;
+    --text-secondary: #667085;
+    --text-faint: #9AA2B1;
+    --gold: #B8874B;
+    --gold-bg: #FBF3E9;
+    --green: #2F8659;
+    --green-bg: #EBF5EF;
+    --red: #C4453B;
+    --focus: #26385C;
+  }
+
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+
+  body{
+    background: var(--bg);
+    font-family: 'IBM Plex Sans Thai', sans-serif;
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 0 0 80px;
+  }
+
+  .page{ max-width: 800px; margin: 0 auto; padding: 0 20px; display: none; }
+  .page.active{ display: block; }
+
+  a, button, input, textarea{ font-family: inherit; }
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    background: var(--navy);
+    color: #fff;
+    padding: 16px 0;
+    margin-bottom: 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-inner{
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display:flex;
+    align-items: center;
+    gap: 20px;
+    justify-content: space-between;
+  }
+  .topbar-left{
+    display:flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .brand-mark{
+    width: 36px; height: 36px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.22);
+    display:flex; align-items:center; justify-content:center;
+    flex: 0 0 auto;
+    font-size: 18px;
+  }
+  .brand-text h1{
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+    line-height: 1.2;
+  }
+  .topbar-nav{
+    display:flex;
+    gap: 8px;
+  }
+  .nav-btn{
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 8px 14px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all .2s;
+  }
+  .nav-btn:hover{
+    background: rgba(255,255,255,0.25);
+    border-color: rgba(255,255,255,0.35);
+  }
+  .nav-btn.active{
+    background: #fff;
+    color: var(--navy);
+    font-weight: 600;
+  }
+
+  /* ---------- Stat cards ---------- */
+  .stats-row{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .stat-card{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 14px;
+    border-bottom: 3px solid var(--border-strong);
+  }
+  .stat-card.total{ border-bottom-color: var(--navy); }
+  .stat-card.pending{ border-bottom-color: var(--gold); }
+  .stat-card.done{ border-bottom-color: var(--green); }
+  .stat-num{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1;
+  }
+  .stat-label{
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    margin-top: 6px;
+  }
+
+  /* ---------- Panels ---------- */
+  .panel{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .panel-header{
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-alt);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 0.02em;
+  }
+  .panel-body{ padding: 20px; }
+
+  /* ---------- Form styles ---------- */
+  .form-group{
+    margin-bottom: 18px;
+  }
+  .form-group:last-child{
+    margin-bottom: 0;
+  }
+  .form-label{
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+  }
+  .form-input, .form-textarea{
+    width: 100%;
+    font-size: 14px;
+    padding: 11px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: 5px;
+    background: #fff;
+    color: var(--text-primary);
+    font-family: inherit;
+  }
+  .form-textarea{
+    resize: vertical;
+    min-height: 80px;
+  }
+  .form-input:focus, .form-textarea:focus{
+    outline: 2px solid var(--focus);
+    outline-offset: 1px;
+    border-color: var(--focus);
+  }
+
+  .photo-upload-box{
+    border: 2px dashed var(--border-strong);
+    border-radius: 8px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+    background: var(--surface-alt);
+  }
+  .photo-upload-box:hover{
+    border-color: var(--navy-soft);
+    background: #f5f7fb;
+  }
+  .photo-upload-box input[type="file"]{
+    display: none;
+  }
+  .upload-icon{
+    font-size: 32px;
+    margin-bottom: 8px;
+  }
+  .upload-text{
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+  .upload-hint{
+    font-size: 12px;
+    color: var(--text-faint);
+    margin-top: 6px;
+  }
+  .photo-preview{
+    margin-top: 12px;
+    display: none;
+  }
+  .photo-preview.show{
+    display: block;
+  }
+  .preview-img{
+    max-width: 100%;
+    height: auto;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    margin-bottom: 10px;
+  }
+  .preview-name{
+    font-size: 12px;
+    color: var(--text-secondary);
+    word-break: break-all;
+    margin-bottom: 8px;
+  }
+  .remove-photo-btn{
+    font-size: 12px;
+    padding: 6px 10px;
+    background: var(--red);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .form-actions{
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+  }
+  .btn-primary{
+    flex: 1;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 12px 18px;
+    border: none;
+    border-radius: 5px;
+    background: var(--navy);
+    color: #fff;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .btn-primary:hover{ background: var(--navy-soft); }
+  .btn-primary:focus-visible{ outline: 2px solid var(--focus); outline-offset: 2px; }
+  .btn-primary:disabled{
+    background: var(--text-faint);
+    cursor: not-allowed;
+  }
+
+  /* ---------- Search bar ---------- */
+  .search-bar{
+    position: relative;
+    margin-bottom: 12px;
+  }
+  .search-icon{
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 13px;
+    color: var(--text-faint);
+    pointer-events: none;
+  }
+  .search-input{
+    width: 100%;
+    font-size: 13.5px;
+    padding: 10px 34px 10px 32px;
+    border: 1px solid var(--border-strong);
+    border-radius: 5px;
+    background: #fff;
+    color: var(--text-primary);
+    font-family: inherit;
+  }
+  .search-input:focus{
+    outline: 2px solid var(--focus);
+    outline-offset: 1px;
+    border-color: var(--focus);
+  }
+  .search-clear-btn{
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 13px;
+    color: var(--text-faint);
+    cursor: pointer;
+    padding: 6px 7px;
+    border-radius: 4px;
+    display: none;
+  }
+  .search-clear-btn:hover{
+    color: var(--text-secondary);
+    background: var(--surface-alt);
+  }
+  .search-clear-btn.show{ display: block; }
+
+  /* ---------- Filter tabs ---------- */
+  .filter-tabs{
+    display:flex;
+    gap: 4px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .filter-tab{
+    background: none;
+    border: none;
+    padding: 9px 14px;
+    font-size: 13.5px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+  .filter-tab.active{
+    color: var(--navy);
+    font-weight: 600;
+    border-bottom-color: var(--navy);
+  }
+  .filter-tab:focus-visible{ outline: 2px solid var(--focus); outline-offset: 2px; }
+  .filter-tab .count{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--text-faint);
+    margin-left: 3px;
+  }
+
+  /* ---------- Pagination ---------- */
+  .pagination{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap: 6px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+  .page-btn{
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: 5px;
+    background: #fff;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-family: 'IBM Plex Mono', monospace;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .page-btn:hover:not(:disabled):not(.active){
+    border-color: var(--navy-soft);
+    color: var(--navy);
+  }
+  .page-btn.active{
+    background: var(--navy);
+    border-color: var(--navy);
+    color: #fff;
+    font-weight: 600;
+    cursor: default;
+  }
+  .page-btn:disabled{
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .page-btn:focus-visible{ outline: 2px solid var(--focus); outline-offset: 2px; }
+  .page-ellipsis{
+    color: var(--text-faint);
+    font-size: 13px;
+    padding: 0 4px;
+  }
+
+  /* ---------- File list ---------- */
+  .ledger-list{ display:flex; flex-direction: column; gap: 12px; }
+
+  .file-card{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    transition: all .15s ease;
+  }
+  .file-card:hover{ box-shadow: 0 2px 10px rgba(20,36,64,0.08); border-color: var(--border-strong); }
+
+  .file-header{
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 14px;
+    gap: 12px;
+  }
+  .file-title-section{
+    flex: 1;
+  }
+  .file-title{
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-primary);
+  }
+  .file-meta{
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin: 4px 0 0;
+  }
+  .file-code{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    background: var(--surface-alt);
+    padding: 4px 8px;
+    border-radius: 4px;
+    color: var(--text-faint);
+    white-space: nowrap;
+  }
+
+  .file-photo{
+    width: 60px;
+    height: 60px;
+    border-radius: 6px;
+    object-fit: cover;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    background: var(--surface-alt);
+  }
+  .file-photo.placeholder{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size: 24px;
+    color: var(--text-faint);
+  }
+
+  .file-status{
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  .status-item{
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+    width: 100%;
+    text-align: left;
+    transition: opacity .2s;
+  }
+  .status-item:hover:not(:disabled){
+    opacity: 0.8;
+  }
+  .status-item:focus-visible{
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  .status-checkbox{
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--border-strong);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    transition: all .2s;
+    flex: 0 0 auto;
+  }
+  .status-checkbox.checked{
+    background: var(--green);
+    border-color: var(--green);
+    color: #fff;
+  }
+
+  .status-label{
+    font-size: 13px;
+    color: var(--text-primary);
+  }
+  .status-date{
+    font-size: 11px;
+    color: var(--text-faint);
+    margin-top: 2px;
+  }
+
+  .status-item-wrapper{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .date-picker-inline{
+    display: none;
+  }
+  .date-picker-inline.show{
+    display: flex;
+    padding: 10px;
+    background: var(--surface-alt);
+    border-radius: 5px;
+    gap: 8px;
+    align-items: center;
+  }
+  .date-picker-inline input[type="date"]{
+    flex: 1;
+    font-size: 13px;
+    padding: 8px 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+  }
+  .date-picker-inline button{
+    padding: 6px 12px;
+    font-size: 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .date-save-btn{
+    background: var(--green);
+    color: #fff;
+  }
+  .date-cancel-btn{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+  }
+
+  .status-divider{
+    height: 32px;
+    width: 2px;
+    background: var(--border);
+  }
+
+  .file-actions{
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+  }
+  .delete-btn{
+    font-size: 12px;
+    padding: 6px 10px;
+    background: var(--surface-alt);
+    color: var(--red);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .delete-btn:hover{
+    background: #ffebea;
+    border-color: var(--red);
+  }
+
+  .empty-state{
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .empty-state.hidden{
+    display: none;
+  }
+  .empty-icon{
+    font-size: 48px;
+    margin-bottom: 12px;
+  }
+  .empty-title{
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 8px;
+    color: var(--text-primary);
+  }
+  .empty-text{
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+
+  /* ---------- Lightbox ---------- */
+  .lightbox{
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .lightbox.open{
+    display: flex;
+  }
+  .lightbox-content{
+    max-width: 90vw;
+    max-height: 90vh;
+    position: relative;
+  }
+  .lightbox-img{
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 8px;
+  }
+  .lightbox-close{
+    position: absolute;
+    top: -35px;
+    right: 0;
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: #fff;
+    font-size: 24px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .lightbox-close:hover{
+    background: rgba(255,255,255,0.3);
+  }
+
+  @media (max-width: 480px) {
+    .stats-row{ grid-template-columns: 1fr; }
+    .file-status{ grid-template-columns: 1fr; }
+    .status-divider{ display: none; }
+    .topbar-nav{ flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-left">
+      <div class="brand-mark">📋</div>
+      <div class="brand-text">
+        <h1>ระบบติดตามแฟ้มเอกสาร</h1>
+      </div>
+    </div>
+    <div class="topbar-nav">
+      <button class="nav-btn active" data-page="dashboard">Dashboard</button>
+      <button class="nav-btn" data-page="add-file">+ เพิ่มแฟ้มใหม่</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ Dashboard Page ============ -->
+<div id="dashboard-page" class="page active">
+  <div class="stats-row">
+    <div class="stat-card total">
+      <div class="stat-num" id="statTotal">0</div>
+      <div class="stat-label">แฟ้มทั้งหมด</div>
+    </div>
+    <div class="stat-card pending">
+      <div class="stat-num" id="statPending">0</div>
+      <div class="stat-label">รอรับลงมา</div>
+    </div>
+    <div class="stat-card done">
+      <div class="stat-num" id="statDone">0</div>
+      <div class="stat-label">เสร็จสิ้น</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <div class="search-bar">
+        <span class="search-icon">🔎</span>
+        <input type="text" class="search-input" id="searchInput" placeholder="ค้นหาชื่อแฟ้ม, รายละเอียด หรือวันที่/เดือน/ปี..." />
+        <button class="search-clear-btn" id="searchClearBtn" type="button" aria-label="ล้างคำค้นหา">✕</button>
+      </div>
+      <div class="filter-tabs">
+        <button class="filter-tab active" data-filter="all">ทั้งหมด <span class="count" id="countAll">0</span></button>
+        <button class="filter-tab" data-filter="pending">รอรับลงมา <span class="count" id="countPending">0</span></button>
+        <button class="filter-tab" data-filter="done">เสร็จสิ้น <span class="count" id="countDone">0</span></button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="ledger-list" id="fileList"></div>
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">📂</div>
+        <h3 class="empty-title" id="emptyTitle">ยังไม่มีแฟ้มในระบบ</h3>
+        <p class="empty-text" id="emptyText">กดปุ่ม "เพิ่มแฟ้มใหม่" เพื่อเริ่มติดตามแฟ้มเอกสารของคุณ</p>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ Add File Page ============ -->
+<div id="add-file-page" class="page">
+  <div class="panel">
+    <div class="panel-header">เพิ่มแฟ้มใหม่</div>
+    <div class="panel-body">
+      <form id="addFileForm">
+        <div class="form-group">
+          <label class="form-label">ชื่อเรื่องหรือชื่อแฟ้ม</label>
+          <input type="text" id="titleInput" class="form-input" placeholder="เช่น คำร้องขอ กำหนดการ ใบรับรอง ฯลฯ" maxlength="120" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">รายละเอียดเพิ่มเติม (ไม่บังคับ)</label>
+          <textarea id="descInput" class="form-textarea" placeholder="เพิ่มรายละเอียดอื่นๆ เช่น ผู้มอบ ตำแหน่ง ฯลฯ" maxlength="300"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">แนบรูป (ไม่บังคับ)</label>
+          <div class="photo-upload-box" id="photoUploadBox">
+            <div class="upload-icon">📸</div>
+            <p class="upload-text">คลิกหรือวางรูปภาพ</p>
+            <p class="upload-hint">รองรับ JPG, PNG (สูงสุด 5MB)</p>
+            <input type="file" id="photoInput" accept="image/jpeg,image/png" />
+          </div>
+          <div class="photo-preview" id="photoPreview">
+            <img class="preview-img" id="previewImg" alt="ตัวอย่างรูป" />
+            <p class="preview-name" id="previewName"></p>
+            <button type="button" class="remove-photo-btn" id="removePhotoBtn">ลบรูป</button>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">บันทึกแฟ้มใหม่</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox">
+  <div class="lightbox-content">
+    <button class="lightbox-close" id="lightboxClose">✕</button>
+    <img class="lightbox-img" id="lightboxImg" alt="" />
+  </div>
+</div>
+
+<script>
+(function(){
+  const CHECK_SVG = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13.5 4L6 11.5L2.5 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  // Elements
+  const navBtns = document.querySelectorAll('.nav-btn');
+  const pages = document.querySelectorAll('.page');
+  const dashboardPage = document.getElementById('dashboard-page');
+  const addFilePage = document.getElementById('add-file-page');
+  
+  const form = document.getElementById('addFileForm');
+  const titleInput = document.getElementById('titleInput');
+  const descInput = document.getElementById('descInput');
+  const photoInput = document.getElementById('photoInput');
+  const photoUploadBox = document.getElementById('photoUploadBox');
+  const photoPreview = document.getElementById('photoPreview');
+  const previewImg = document.getElementById('previewImg');
+  const previewName = document.getElementById('previewName');
+  const removePhotoBtn = document.getElementById('removePhotoBtn');
+
+  const fileList = document.getElementById('fileList');
+  const emptyState = document.getElementById('emptyState');
+  const emptyTitle = document.getElementById('emptyTitle');
+  const emptyText = document.getElementById('emptyText');
+  
+  const statTotal = document.getElementById('statTotal');
+  const statPending = document.getElementById('statPending');
+  const statDone = document.getElementById('statDone');
+  const countAll = document.getElementById('countAll');
+  const countPending = document.getElementById('countPending');
+  const countDone = document.getElementById('countDone');
+
+  const filterTabs = document.querySelectorAll('.filter-tab');
+  const searchInput = document.getElementById('searchInput');
+  const searchClearBtn = document.getElementById('searchClearBtn');
+  const pagination = document.getElementById('pagination');
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightboxImg');
+  const lightboxClose = document.getElementById('lightboxClose');
+
+  // State
+  let state = { entries: [], nextSeq: 1 };
+  let currentFilter = 'all';
+  let searchQuery = '';
+  let currentPage = 1;
+  const PAGE_SIZE = 6;
+  let pendingPhoto = null;
+  let pendingPhotoFile = null;
+  let editingDateFor = null; // { id, type } เช่น { id: 'e123', type: 'sent' }
+
+  // ============ Navigation ============
+  navBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const pageId = btn.dataset.page + '-page';
+      switchPage(pageId);
+      navBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  function switchPage(pageId) {
+    pages.forEach(p => p.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+  }
+
+  // ============ Photo Upload ============
+  photoUploadBox.addEventListener('click', () => photoInput.click());
+
+  photoUploadBox.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    photoUploadBox.style.background = '#f0f2f7';
+  });
+
+  photoUploadBox.addEventListener('dragleave', () => {
+    photoUploadBox.style.background = '';
+  });
+
+  photoUploadBox.addEventListener('drop', (e) => {
+    e.preventDefault();
+    photoUploadBox.style.background = '';
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      photoInput.files = files;
+      handlePhotoSelect();
+    }
+  });
+
+  photoInput.addEventListener('change', handlePhotoSelect);
+
+  function handlePhotoSelect() {
+    const file = photoInput.files[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('ไฟล์ใหญ่เกินไป (สูงสุด 5MB)');
+      photoInput.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxW = 600;
+        const scale = Math.min(1, maxW / img.width);
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        pendingPhoto = canvas.toDataURL('image/jpeg', 0.75);
+        pendingPhotoFile = file;
+        displayPhotoPreview();
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function displayPhotoPreview() {
+    previewImg.src = pendingPhoto;
+    previewName.textContent = pendingPhotoFile.name;
+    photoPreview.classList.add('show');
+  }
+
+  removePhotoBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    pendingPhoto = null;
+    pendingPhotoFile = null;
+    photoInput.value = '';
+    photoPreview.classList.remove('show');
+  });
+
+  // ============ Form Submit ============
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const title = titleInput.value.trim();
+    if (!title) return;
+
+    const entry = {
+      id: 'e' + Date.now() + Math.random().toString(36).slice(2, 7),
+      seq: state.nextSeq,
+      title: title,
+      desc: descInput.value.trim(),
+      photo: pendingPhoto,
+      sent: false,
+      sentDate: null,
+      returned: false,
+      returnedDate: null,
+      createdAt: Date.now()
+    };
+
+    state.nextSeq += 1;
+    state.entries.unshift(entry);
+    currentPage = 1;
+
+    // Reset form
+    titleInput.value = '';
+    descInput.value = '';
+    pendingPhoto = null;
+    pendingPhotoFile = null;
+    photoInput.value = '';
+    photoPreview.classList.remove('show');
+
+    render();
+    await save();
+
+    // Switch to dashboard
+    switchPage('dashboard-page');
+    navBtns.forEach(b => b.classList.remove('active'));
+    navBtns[0].classList.add('active');
+  });
+
+  // ============ Status Toggle ============
+  function toggleStatus(id, type) {
+    const entry = state.entries.find(e => e.id === id);
+    if (!entry) return;
+
+    if (type === 'sent') {
+      entry.sent = !entry.sent;
+      entry.sentDate = entry.sent ? new Date().toLocaleDateString('th-TH') : null;
+      // If unchecking sent, also uncheck returned
+      if (!entry.sent) {
+        entry.returned = false;
+        entry.returnedDate = null;
+      }
+    } else {
+      entry.returned = !entry.returned;
+      entry.returnedDate = entry.returned ? new Date().toLocaleDateString('th-TH') : null;
+    }
+
+    render();
+    save();
+  }
+
+  function deleteEntry(id) {
+    if (confirm('ลบแฟ้มนี้?')) {
+      state.entries = state.entries.filter(e => e.id !== id);
+      render();
+      save();
+    }
+  }
+
+  // ============ Rendering ============
+  function render() {
+    const total = state.entries.length;
+    const pending = state.entries.filter(e => e.sent && !e.returned).length;
+    const done = state.entries.filter(e => e.sent && e.returned).length;
+
+    statTotal.textContent = total;
+    statPending.textContent = pending;
+    statDone.textContent = done;
+    countAll.textContent = total;
+    countPending.textContent = pending;
+    countDone.textContent = done;
+
+    filterTabs.forEach(tab => {
+      tab.classList.toggle('active', tab.dataset.filter === currentFilter);
+    });
+
+    const filtered = applyFilter(state.entries);
+
+    if (filtered.length === 0) {
+      fileList.innerHTML = '';
+      pagination.innerHTML = '';
+      emptyState.classList.remove('hidden');
+      if (total === 0) {
+        emptyTitle.textContent = 'ยังไม่มีแฟ้มในระบบ';
+        emptyText.textContent = 'กดปุ่ม "เพิ่มแฟ้มใหม่" เพื่อเริ่มติดตามแฟ้มเอกสารของคุณ';
+      } else if (searchQuery) {
+        emptyTitle.textContent = 'ไม่พบแฟ้มที่ค้นหา';
+        emptyText.textContent = 'ลองค้นหาด้วยคำอื่น หรือล้างคำค้นหา';
+      } else {
+        emptyTitle.textContent = 'ไม่มีแฟ้มในหมวดนี้';
+        emptyText.textContent = 'ลองเลือกแท็บอื่นเพื่อดูแฟ้มทั้งหมด';
+      }
+      return;
+    }
+
+    emptyState.classList.add('hidden');
+
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    const pageItems = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+    fileList.innerHTML = pageItems.map(entry => createFileCard(entry)).join('');
+
+    renderPagination(totalPages);
+  }
+
+  function renderPagination(totalPages) {
+    if (totalPages <= 1) {
+      pagination.innerHTML = '';
+      return;
+    }
+
+    let html = `<button class="page-btn" data-page="prev" ${currentPage === 1 ? 'disabled' : ''} aria-label="ก่อนหน้า">‹</button>`;
+
+    getPageNumbers(currentPage, totalPages).forEach(p => {
+      if (p === '...') {
+        html += `<span class="page-ellipsis">…</span>`;
+      } else {
+        html += `<button class="page-btn ${p === currentPage ? 'active' : ''}" data-page="${p}">${p}</button>`;
+      }
+    });
+
+    html += `<button class="page-btn" data-page="next" ${currentPage === totalPages ? 'disabled' : ''} aria-label="ถัดไป">›</button>`;
+
+    pagination.innerHTML = html;
+  }
+
+  function getPageNumbers(current, total) {
+    const delta = 1;
+    const range = [];
+    const withDots = [];
+    let last;
+
+    for (let i = 1; i <= total; i++) {
+      if (i === 1 || i === total || (i >= current - delta && i <= current + delta)) {
+        range.push(i);
+      }
+    }
+
+    range.forEach(i => {
+      if (last !== undefined) {
+        if (i - last === 2) withDots.push(last + 1);
+        else if (i - last !== 1) withDots.push('...');
+      }
+      withDots.push(i);
+      last = i;
+    });
+
+    return withDots;
+  }
+
+  function applyFilter(entries) {
+    let result = entries;
+    if (currentFilter === 'pending') result = result.filter(e => e.sent && !e.returned);
+    else if (currentFilter === 'done') result = result.filter(e => e.sent && e.returned);
+
+    if (searchQuery) {
+      result = result.filter(e => entrySearchText(e).includes(searchQuery));
+    }
+
+    return result;
+  }
+
+  // รวมข้อความสำหรับค้นหา: ชื่อเรื่อง, รายละเอียด, และวันที่ (สร้าง/ส่งขึ้น/รับลงมา)
+  // ในหลายรูปแบบ (ไทยเต็ม, ไทยย่อ, ตัวเลข วัน/เดือน/ปี) เพื่อให้ค้นด้วยวัน เดือน หรือปีได้
+  function entrySearchText(entry) {
+    const parts = [entry.title, entry.desc || ''];
+
+    parts.push(dateSearchTokens(new Date(entry.createdAt)));
+    if (entry.sentDate) parts.push(dateSearchTokens(isoToDateObj(entry.sentDate)));
+    if (entry.returnedDate) parts.push(dateSearchTokens(isoToDateObj(entry.returnedDate)));
+
+    return parts.join(' ').toLowerCase();
+  }
+
+  function isoToDateObj(isoStr) {
+    const [year, month, day] = isoStr.split('-');
+    return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+  }
+
+  function dateSearchTokens(d) {
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    const buddhistYear = year + 543;
+    const thaiLong = d.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
+    const thaiShort = d.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
+
+    return [
+      thaiLong, thaiShort,
+      `${day}/${month}/${year}`,
+      `${day}-${month}-${year}`,
+      `${year}-${month}-${day}`,
+      String(year), String(buddhistYear)
+    ].join(' ');
+  }
+
+  function createFileCard(entry) {
+    const photoHtml = entry.photo
+      ? `<img class="file-photo" src="${entry.photo}" alt="รูป: ${escapeHtml(entry.title)}" data-full="${entry.photo}" />`
+      : `<div class="file-photo placeholder">📄</div>`;
+
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    const showSentDatePicker = editingDateFor && editingDateFor.id === entry.id && editingDateFor.type === 'sent';
+    const showReturnedDatePicker = editingDateFor && editingDateFor.id === entry.id && editingDateFor.type === 'returned';
+
+    // ติ๊กถูกให้ขึ้นทันทีตอนเปิดช่องกรอกวันที่ (ก่อนกดบันทึกจริง) เพื่อให้เห็นว่าเลือกแล้ว
+    const sentCheckSvg = (entry.sent || showSentDatePicker) ? CHECK_SVG : '';
+    const returnedCheckSvg = (entry.returned || showReturnedDatePicker) ? CHECK_SVG : '';
+
+    const sentDateValue = entry.sent && entry.sentDate ? entry.sentDate : todayStr;
+    const returnedDateValue = entry.returned && entry.returnedDate ? entry.returnedDate : todayStr;
+    
+    const sentDateDisplay = entry.sent && entry.sentDate ? isoToThaiDate(entry.sentDate) : '';
+    const returnedDateDisplay = entry.returned && entry.returnedDate ? isoToThaiDate(entry.returnedDate) : '';
+
+    return `
+      <div class="file-card">
+        <div style="display: flex; gap: 14px;">
+          ${photoHtml}
+          <div class="file-header" style="margin: 0; gap: 0;">
+            <div class="file-title-section">
+              <p class="file-title">${escapeHtml(entry.title)}</p>
+              <p class="file-meta">${formatDateTime(entry.createdAt)}</p>
+              ${entry.desc ? `<p class="file-meta">${escapeHtml(entry.desc)}</p>` : ''}
+            </div>
+            <div class="file-code">#${docCode(entry)}</div>
+          </div>
+        </div>
+
+        <div class="file-status">
+          <div style="flex: 1;">
+            <button class="status-item" data-action="toggle-sent" data-id="${entry.id}" style="background: none; border: none; padding: 0; cursor: pointer; text-align: left; width: 100%;">
+              <div class="status-checkbox ${(entry.sent || showSentDatePicker) ? 'checked' : ''}">${sentCheckSvg}</div>
+              <div>
+                <div class="status-label">ส่งขึ้นไปแล้ว</div>
+                ${sentDateDisplay ? `<div class="status-date">${sentDateDisplay}</div>` : ''}
+                ${showSentDatePicker && !entry.sent ? `<div class="status-date">เลือกวันที่แล้วกดบันทึก</div>` : ''}
+              </div>
+            </button>
+            ${(entry.sent || showSentDatePicker) ? `
+              <div class="date-picker-inline ${showSentDatePicker ? 'show' : ''}" data-entry-id="${entry.id}" data-type="sent" style="margin-top: 8px;">
+                <input type="date" class="date-input" value="${sentDateValue}" max="${todayStr}" />
+                <button class="date-save-btn" data-action="save-date" data-id="${entry.id}" data-type="sent">บันทึก</button>
+                <button class="date-cancel-btn" data-action="cancel-date" data-id="${entry.id}" data-type="sent">ยกเลิก</button>
+              </div>
+            ` : ''}
+          </div>
+
+          <div class="status-divider"></div>
+
+          <div style="flex: 1;">
+            <button class="status-item" data-action="toggle-returned" data-id="${entry.id}" ${!entry.sent ? 'style="opacity: 0.5; pointer-events: none; background: none; border: none; padding: 0; cursor: not-allowed; text-align: left; width: 100%;"' : 'style="background: none; border: none; padding: 0; cursor: pointer; text-align: left; width: 100%;"'}>
+              <div class="status-checkbox ${(entry.returned || showReturnedDatePicker) ? 'checked' : ''}">${returnedCheckSvg}</div>
+              <div>
+                <div class="status-label">รับลงมาแล้ว</div>
+                ${returnedDateDisplay ? `<div class="status-date">${returnedDateDisplay}</div>` : ''}
+                ${showReturnedDatePicker && !entry.returned ? `<div class="status-date">เลือกวันที่แล้วกดบันทึก</div>` : ''}
+              </div>
+            </button>
+            ${(entry.returned || showReturnedDatePicker) ? `
+              <div class="date-picker-inline ${showReturnedDatePicker ? 'show' : ''}" data-entry-id="${entry.id}" data-type="returned" style="margin-top: 8px;">
+                <input type="date" class="date-input" value="${returnedDateValue}" max="${todayStr}" />
+                <button class="date-save-btn" data-action="save-date" data-id="${entry.id}" data-type="returned">บันทึก</button>
+                <button class="date-cancel-btn" data-action="cancel-date" data-id="${entry.id}" data-type="returned">ยกเลิก</button>
+              </div>
+            ` : ''}
+          </div>
+
+          <div class="file-actions">
+            <button class="delete-btn" data-action="delete" data-id="${entry.id}">ลบ</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function docCode(entry) {
+    return String(entry.seq).padStart(4, '0');
+  }
+
+  function formatDateTime(ts) {
+    const d = new Date(ts);
+    return d.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' }) + 
+           ' ' + d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function dateToIso(dateStr) {
+    if (!dateStr) return new Date().toISOString().split('T')[0];
+    // dateStr อยู่ในรูป "DD/MM/YYYY" จากการ toLocaleDateString
+    // ต้องแปลงกลับ เลยใช้ Date.now() แทน
+    return new Date().toISOString().split('T')[0];
+  }
+
+  function isoToThaiDate(isoStr) {
+    if (!isoStr) return '';
+    const [year, month, day] = isoStr.split('-');
+    const d = new Date(year, parseInt(month) - 1, day);
+    return d.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  // ============ Event Delegation ============
+  fileList.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+
+    const action = btn.dataset.action;
+    const id = btn.dataset.id;
+    const type = btn.dataset.type;
+
+    if (action === 'toggle-sent') {
+      toggleStatusWithDatePicker(id, 'sent', e);
+    } else if (action === 'toggle-returned') {
+      toggleStatusWithDatePicker(id, 'returned', e);
+    } else if (action === 'save-date') {
+      saveDateForEntry(id, type);
+    } else if (action === 'cancel-date') {
+      cancelDateEdit();
+    } else if (action === 'delete') {
+      deleteEntry(id);
+    }
+  });
+
+  function toggleStatusWithDatePicker(id, type, e) {
+    const entry = state.entries.find(x => x.id === id);
+    if (!entry) return;
+
+    const isPending = editingDateFor && editingDateFor.id === id && editingDateFor.type === type;
+
+    // ถ้า already checked แล้ว (บันทึกแล้วจริง) ให้ uncheck
+    if (type === 'sent' && entry.sent) {
+      entry.sent = false;
+      entry.sentDate = null;
+      entry.returned = false;
+      entry.returnedDate = null;
+      editingDateFor = null;
+      render();
+      save();
+      return;
+    } else if (type === 'returned' && entry.returned) {
+      entry.returned = false;
+      entry.returnedDate = null;
+      editingDateFor = null;
+      render();
+      save();
+      return;
+    }
+
+    // ถ้าติ๊กค้างรอกรอกวันที่อยู่ (ยังไม่กดบันทึก) แล้วกดซ้ำ ให้ยกเลิกการติ๊ก
+    if (isPending) {
+      editingDateFor = null;
+      render();
+      return;
+    }
+
+    // ยังไม่ติ๊ก -> ติ๊กให้ขึ้นทันที แล้วเปิดช่องกรอกวันที่ ยังไม่ถือว่าสำเร็จจนกว่าจะเลือกวันที่แล้วกด "บันทึก"
+    if (type === 'returned' && !entry.sent) return; // ต้องส่งขึ้นไปก่อนถึงจะรับลงมาได้
+
+    editingDateFor = { id, type };
+
+    render();
+
+    // Auto-focus ไปที่ date input หลังจาก render
+    setTimeout(() => {
+      const datePicker = fileList.querySelector(`[data-entry-id="${id}"][data-type="${type}"] .date-input`);
+      if (datePicker) {
+        datePicker.focus();
+        if (datePicker.showPicker) {
+          try {
+            datePicker.showPicker();
+          } catch (e) {}
+        }
+      }
+    }, 0);
+  }
+
+  function saveDateForEntry(id, type) {
+    const entry = state.entries.find(x => x.id === id);
+    if (!entry) return;
+
+    const picker = fileList.querySelector(`[data-entry-id="${id}"][data-type="${type}"]`);
+    const input = picker?.querySelector('.date-input');
+    if (!input || !input.value) return;
+
+    // ยืนยันสถานะพร้อมวันที่ที่เลือก (เก็บเป็น ISO format) เมื่อกดบันทึกเท่านั้น
+    if (type === 'sent') {
+      entry.sent = true;
+      entry.sentDate = input.value;
+    } else if (type === 'returned') {
+      entry.returned = true;
+      entry.returnedDate = input.value;
+    }
+
+    editingDateFor = null;
+    render();
+    save();
+  }
+
+  function cancelDateEdit() {
+    // ยกเลิกโดยไม่บันทึกสถานะใดๆ (สถานะเดิมยังไม่ถูกแก้ไข)
+    editingDateFor = null;
+    render();
+  }
+
+  // Photo lightbox
+  fileList.addEventListener('click', (e) => {
+    const img = e.target.closest('.file-photo[data-full]');
+    if (img) {
+      lightboxImg.src = img.dataset.full;
+      lightbox.classList.add('open');
+    }
+  });
+
+  lightboxClose.addEventListener('click', () => lightbox.classList.remove('open'));
+  lightbox.addEventListener('click', (e) => {
+    if (e.target === lightbox) lightbox.classList.remove('open');
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') lightbox.classList.remove('open');
+  });
+
+  // Filter tabs
+  filterTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      currentFilter = tab.dataset.filter;
+      currentPage = 1;
+      render();
+    });
+  });
+
+  // Search bar
+  searchInput.addEventListener('input', () => {
+    searchQuery = searchInput.value.trim().toLowerCase();
+    searchClearBtn.classList.toggle('show', searchQuery.length > 0);
+    currentPage = 1;
+    render();
+  });
+
+  searchClearBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    searchQuery = '';
+    searchClearBtn.classList.remove('show');
+    currentPage = 1;
+    render();
+    searchInput.focus();
+  });
+
+  // Pagination
+  pagination.addEventListener('click', (e) => {
+    const btn = e.target.closest('.page-btn');
+    if (!btn || btn.disabled) return;
+    const p = btn.dataset.page;
+    if (p === 'prev') currentPage -= 1;
+    else if (p === 'next') currentPage += 1;
+    else currentPage = parseInt(p, 10);
+    render();
+  });
+
+  // ============ Storage ============
+  async function save() {
+    try {
+      localStorage.setItem('fileTrackerState', JSON.stringify(state));
+    } catch (err) {
+      console.error('Failed to save:', err);
+    }
+  }
+
+  function load() {
+    try {
+      const saved = localStorage.getItem('fileTrackerState');
+      if (saved) {
+        state = JSON.parse(saved);
+      }
+    } catch (err) {
+      console.error('Failed to load:', err);
+    }
+    render();
+  }
+
+  load();
+})();
+</script>
+
+</body>
+</html>
