@@ -337,9 +337,10 @@
   }
   
   .upload-icon{
-    font-size: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin-bottom: 8px;
-    display: inline-block;
     animation: uploadIconBounce 2s ease-in-out infinite;
   }
   .photo-upload-box:hover .upload-icon{
@@ -493,7 +494,7 @@
     left: 11px;
     top: 50%;
     transform: translateY(-50%);
-    font-size: 13px;
+    display: flex;
     color: var(--text-faint);
     pointer-events: none;
     transition: all 0.3s ease;
@@ -1177,6 +1178,9 @@
 
   .edit-btn,
   .delete-btn{
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
     font-size: 12px;
     padding: 7px 12px;
     border-radius: 5px;
@@ -1241,7 +1245,9 @@
     display: none;
   }
   .empty-icon{
-    font-size: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin-bottom: 12px;
     animation: emptyIconFloat 3s ease-in-out infinite;
   }
@@ -1340,9 +1346,10 @@
   }
   
   .delete-confirm-icon {
-    font-size: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin-bottom: 16px;
-    display: inline-block;
     animation: swing 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   }
   

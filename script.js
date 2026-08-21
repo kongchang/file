@@ -10,6 +10,11 @@ import {
 import { firebaseConfig } from './firebase-config.js';
 
 const CHECK_SVG = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13.5 4L6 11.5L2.5 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const EDIT_SVG = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16.474 5.408a2.5 2.5 0 0 1 3.536 3.536L7.5 21.454 3 22l.546-4.5L16.474 5.408Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>';
+const TRASH_SVG = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 7H20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M9 7V5C9 4.44772 9.44772 4 10 4H14C14.5523 4 15 4.44772 15 5V7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 7L6.75 19.25C6.80228 20.1074 7.51555 20.75 8.375 20.75H15.625C16.4845 20.75 17.1977 20.1074 17.25 19.25L18 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11V16.5M14 11V16.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+const TRASH_SVG_LARGE = '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 7H20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M9 7V5C9 4.44772 9.44772 4 10 4H14C14.5523 4 15 4.44772 15 5V7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 7L6.75 19.25C6.80228 20.1074 7.51555 20.75 8.375 20.75H15.625C16.4845 20.75 17.1977 20.1074 17.25 19.25L18 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11V16.5M14 11V16.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+const DOC_SVG = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6.5 3.5H13L18 8.5V19.5C18 20.0523 17.5523 20.5 17 20.5H6.5C5.94772 20.5 5.5 20.0523 5.5 19.5V4.5C5.5 3.94772 5.94772 3.5 6.5 3.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M13 3.5V7.5C13 8.05228 13.4477 8.5 14 8.5H18" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>';
+const CLOCK_SVG = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:-2px; margin-right:3px;"><circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="1.8"/><path d="M12 9V13L15 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.5 2.5H14.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
 
 // ---------- Elements ----------
 const navBtns = document.querySelectorAll('.nav-btn');
@@ -401,7 +406,7 @@ function showDeleteConfirmDialog(id) {
   backdrop.className = 'delete-confirm-backdrop';
   backdrop.innerHTML = `
     <div class="delete-confirm-dialog">
-      <div class="delete-confirm-icon">🗑️</div>
+      <div class="delete-confirm-icon">${TRASH_SVG_LARGE}</div>
       <h3 class="delete-confirm-title">ลบแฟ้มนี้?</h3>
       <p class="delete-confirm-text">การกระทำนี้ไม่สามารถยกเลิกได้</p>
       <div class="delete-confirm-actions">
@@ -663,7 +668,7 @@ function dateSearchTokens(d) {
 function createFileCard(entry) {
   const photoHtml = entry.photo
     ? `<img class="file-photo" src="${entry.photo}" alt="รูป: ${escapeHtml(entry.title)}" data-full="${entry.photo}" />`
-    : `<div class="file-photo placeholder">📄</div>`;
+    : `<div class="file-photo placeholder">${DOC_SVG}</div>`;
 
   const todayStr = new Date().toISOString().split('T')[0];
 
@@ -736,8 +741,8 @@ function createFileCard(entry) {
 
       <div class="file-footer">
         <div class="file-actions">
-          <button class="edit-btn" data-action="edit" data-id="${entry.id}">✏️ แก้ไข</button>
-          <button class="delete-btn" data-action="delete" data-id="${entry.id}">🗑️ ลบ</button>
+          <button class="edit-btn" data-action="edit" data-id="${entry.id}">${EDIT_SVG} แก้ไข</button>
+          <button class="delete-btn" data-action="delete" data-id="${entry.id}">${TRASH_SVG} ลบ</button>
         </div>
       </div>
 
@@ -841,7 +846,7 @@ function createTimeframeHtml(entry) {
 
   return `
     <div class="file-timeframe">
-      <div class="timeframe-label">⏱️ ระยะเวลา</div>
+      <div class="timeframe-label">${CLOCK_SVG} ระยะเวลา</div>
       ${timelineHtml}
       ${detailHtml}
     </div>
