@@ -1173,9 +1173,17 @@
     background: var(--border);
   }
 
+  .file-footer{
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+
   .file-actions{
     display: flex;
-    gap: 6px;
+    gap: 8px;
     justify-content: flex-end;
   }
   @keyframes deleteHover {
@@ -1186,17 +1194,37 @@
       background: #ffebea;
     }
   }
-  
+
+  .edit-btn,
   .delete-btn{
     font-size: 12px;
-    padding: 6px 10px;
+    padding: 7px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    font-family: inherit;
+  }
+
+  .edit-btn{
+    background: var(--surface-alt);
+    color: var(--navy-soft);
+    border: 1px solid var(--border);
+  }
+  .edit-btn:hover{
+    background: #EAF0FB;
+    border-color: var(--navy-soft);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(38, 56, 92, 0.15);
+  }
+  .edit-btn:active{
+    transform: translateY(0);
+  }
+
+  .delete-btn{
     background: var(--surface-alt);
     color: var(--red);
     border: 1px solid var(--border);
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: 500;
   }
   .delete-btn:hover{
     background: #ffebea;

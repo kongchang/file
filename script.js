@@ -15,6 +15,7 @@ const CHECK_SVG = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" x
 const navBtns = document.querySelectorAll('.nav-btn');
 const pages = document.querySelectorAll('.page');
 
+const addFileHeader = document.getElementById('addFileHeader');
 const form = document.getElementById('addFileForm');
 const titleInput = document.getElementById('titleInput');
 const descInput = document.getElementById('descInput');
@@ -65,6 +66,7 @@ const PAGE_SIZE = 6;
 let pendingPhoto = null;
 let pendingPhotoFile = null;
 let editingDateFor = null; // { id, type } เช่น { id: 'e123', type: 'sent' }
+let editingEntryId = null; // id ของแฟ้มที่กำลังแก้ไข, null = โหมดเพิ่มแฟ้มใหม่
 
 // ============ Connection status banner ============
 function showConnMessage(msg, isError) {
@@ -120,12 +122,17 @@ async function addEntry(entryData) {
 }
 
 async function updateEntry(id, patch) {
-  if (!db) return;
+  if (!db) {
+    showConnMessage('⚠️ ยังเชื่อมต่อ Firebase ไม่ได้ ตรวจสอบ firebase-config.js', true);
+    return false;
+  }
   try {
     await updateDoc(doc(db, 'entries', id), patch);
+    return true;
   } catch (err) {
     console.error('Update failed:', err);
-    showConnMessage('⚠️ อัปเดตสถานะไม่สำเร็จ ลองใหม่อีกครั้ง', true);
+    showConnMessage('⚠️ อัปเดตข้อมูลไม่สำเร็จ ลองใหม่อีกครั้ง', true);
+    return false;
   }
 }
 
@@ -143,6 +150,12 @@ async function removeEntry(id) {
 navBtns.forEach(btn => {
   btn.addEventListener('click', () => {
     const pageId = btn.dataset.page + '-page';
+    if (pageId === 'add-file-page') {
+      // เข้าหน้านี้ผ่านเมนูโดยตรง = เริ่มเพิ่มแฟ้มใหม่ ไม่ใช่แก้ไขแฟ้มเดิม
+      resetFormToAddMode();
+    } else {
+      editingEntryId = null;
+    }
     switchPage(pageId);
     navBtns.forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
@@ -152,6 +165,46 @@ navBtns.forEach(btn => {
 function switchPage(pageId) {
   pages.forEach(p => p.classList.remove('active'));
   document.getElementById(pageId).classList.add('active');
+}
+
+// ============ Add / Edit form mode helpers ============
+function resetFormToAddMode() {
+  editingEntryId = null;
+  titleInput.value = '';
+  descInput.value = '';
+  pendingPhoto = null;
+  pendingPhotoFile = null;
+  photoInput.value = '';
+  photoPreview.classList.remove('show');
+  addFileHeader.textContent = 'เพิ่มแฟ้มใหม่';
+  submitBtn.textContent = 'บันทึกแฟ้มใหม่';
+}
+
+function openEditForm(id) {
+  const entry = state.entries.find(x => x.id === id);
+  if (!entry) return;
+
+  editingEntryId = id;
+  titleInput.value = entry.title || '';
+  descInput.value = entry.desc || '';
+
+  if (entry.photo) {
+    pendingPhoto = entry.photo;
+    pendingPhotoFile = null;
+    displayPhotoPreview();
+  } else {
+    pendingPhoto = null;
+    pendingPhotoFile = null;
+    photoInput.value = '';
+    photoPreview.classList.remove('show');
+  }
+
+  addFileHeader.textContent = 'แก้ไขแฟ้ม';
+  submitBtn.textContent = 'บันทึกการแก้ไข';
+
+  switchPage('add-file-page');
+  navBtns.forEach(b => b.classList.remove('active'));
+  navBtns[1].classList.add('active');
 }
 
 // ============ Photo Upload ============
@@ -210,7 +263,7 @@ function handlePhotoSelect() {
 
 function displayPhotoPreview() {
   previewImg.src = pendingPhoto;
-  previewName.textContent = pendingPhotoFile.name;
+  previewName.textContent = pendingPhotoFile ? pendingPhotoFile.name : 'รูปที่แนบไว้เดิม';
   photoPreview.classList.add('show');
 }
 
@@ -222,41 +275,46 @@ removePhotoBtn.addEventListener('click', (e) => {
   photoPreview.classList.remove('show');
 });
 
-// ============ Form Submit ============
+// ============ Form Submit (เพิ่มแฟ้มใหม่ / แก้ไขแฟ้ม) ============
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   const title = titleInput.value.trim();
   if (!title) return;
 
-  const entryData = {
-    title: title,
-    desc: descInput.value.trim(),
-    photo: pendingPhoto,
-    sent: false,
-    sentDate: null,
-    returned: false,
-    returnedDate: null,
-    createdAt: Date.now()
-  };
+  const isEditing = !!editingEntryId;
 
   submitBtn.disabled = true;
   submitBtn.textContent = 'กำลังบันทึก...';
 
-  const ok = await addEntry(entryData);
+  let ok;
+  if (isEditing) {
+    ok = await updateEntry(editingEntryId, {
+      title: title,
+      desc: descInput.value.trim(),
+      photo: pendingPhoto
+    });
+  } else {
+    ok = await addEntry({
+      title: title,
+      desc: descInput.value.trim(),
+      photo: pendingPhoto,
+      sent: false,
+      sentDate: null,
+      returned: false,
+      returnedDate: null,
+      createdAt: Date.now()
+    });
+  }
 
   submitBtn.disabled = false;
-  submitBtn.textContent = 'บันทึกแฟ้มใหม่';
 
-  if (!ok) return;
+  if (!ok) {
+    submitBtn.textContent = isEditing ? 'บันทึกการแก้ไข' : 'บันทึกแฟ้มใหม่';
+    return;
+  }
 
-  // Reset form
-  titleInput.value = '';
-  descInput.value = '';
-  pendingPhoto = null;
-  pendingPhotoFile = null;
-  photoInput.value = '';
-  photoPreview.classList.remove('show');
   currentPage = 1;
+  resetFormToAddMode();
 
   // Switch to dashboard
   switchPage('dashboard-page');
@@ -672,9 +730,12 @@ function createFileCard(entry) {
             </div>
           ` : ''}
         </div>
+      </div>
 
+      <div class="file-footer">
         <div class="file-actions">
-          <button class="delete-btn" data-action="delete" data-id="${entry.id}">ลบ</button>
+          <button class="edit-btn" data-action="edit" data-id="${entry.id}">✏️ แก้ไข</button>
+          <button class="delete-btn" data-action="delete" data-id="${entry.id}">🗑️ ลบ</button>
         </div>
       </div>
 
@@ -809,6 +870,8 @@ fileList.addEventListener('click', (e) => {
     saveDateForEntry(id, type);
   } else if (action === 'cancel-date') {
     cancelDateEdit();
+  } else if (action === 'edit') {
+    openEditForm(id);
   } else if (action === 'delete') {
     deleteEntry(id);
   }
