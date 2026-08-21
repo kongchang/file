@@ -583,7 +583,26 @@ function applyFilter(entries) {
     result = result.filter(e => entrySearchText(e).includes(searchQuery));
   }
 
+  // Sort by status: not started → pending → done, then by createdAt descending
+  result.sort((a, b) => {
+    const statusA = getEntryStatus(a);
+    const statusB = getEntryStatus(b);
+    const statusOrder = { 'not-started': 0, 'pending': 1, 'done': 2 };
+    
+    if (statusOrder[statusA] !== statusOrder[statusB]) {
+      return statusOrder[statusA] - statusOrder[statusB];
+    }
+    // If same status, sort by createdAt descending (newest first)
+    return b.createdAt - a.createdAt;
+  });
+
   return result;
+}
+
+function getEntryStatus(entry) {
+  if (entry.sent && entry.returned) return 'done';
+  if (entry.sent && !entry.returned) return 'pending';
+  return 'not-started';
 }
 
 // คำนวณช่วงวันที่ (start inclusive, end exclusive) ตาม currentTimeframe ที่เลือกไว้
