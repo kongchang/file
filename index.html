@@ -56,6 +56,23 @@
         <button class="filter-tab" data-filter="pending">รอรับลงมา <span class="count" id="countPending">0</span></button>
         <button class="filter-tab" data-filter="done">เสร็จสิ้น <span class="count" id="countDone">0</span></button>
       </div>
+      <div class="timeframe-row">
+        <span class="timeframe-row-label">ช่วงเวลา:</span>
+        <div class="timeframe-chips" id="timeframeChips">
+          <button class="timeframe-chip active" data-timeframe="all">ทั้งหมด</button>
+          <button class="timeframe-chip" data-timeframe="today">วันนี้</button>
+          <button class="timeframe-chip" data-timeframe="week">สัปดาห์นี้</button>
+          <button class="timeframe-chip" data-timeframe="month">เดือนนี้</button>
+          <button class="timeframe-chip" data-timeframe="year">ปีนี้</button>
+          <button class="timeframe-chip" data-timeframe="custom">กำหนดเอง</button>
+        </div>
+        <div class="timeframe-custom-range" id="timeframeCustomRange">
+          <input type="date" id="timeframeStart" aria-label="วันที่เริ่มต้น" />
+          <span class="timeframe-range-sep">ถึง</span>
+          <input type="date" id="timeframeEnd" aria-label="วันที่สิ้นสุด" />
+          <button type="button" class="timeframe-apply-btn" id="timeframeApplyBtn">ใช้ตัวกรอง</button>
+        </div>
+      </div>
     </div>
     <div class="panel-body">
       <div class="ledger-list" id="fileList"></div>

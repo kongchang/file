@@ -39,6 +39,11 @@ const countPending = document.getElementById('countPending');
 const countDone = document.getElementById('countDone');
 
 const filterTabs = document.querySelectorAll('.filter-tab');
+const timeframeChips = document.querySelectorAll('.timeframe-chip');
+const timeframeCustomRange = document.getElementById('timeframeCustomRange');
+const timeframeStart = document.getElementById('timeframeStart');
+const timeframeEnd = document.getElementById('timeframeEnd');
+const timeframeApplyBtn = document.getElementById('timeframeApplyBtn');
 const searchInput = document.getElementById('searchInput');
 const searchClearBtn = document.getElementById('searchClearBtn');
 const pagination = document.getElementById('pagination');
@@ -51,6 +56,9 @@ const connStatus = document.getElementById('connStatus');
 let state = { entries: [] };
 let seqMap = new Map(); // id -> running number, computed each render from createdAt order
 let currentFilter = 'all';
+let currentTimeframe = 'all'; // 'all' | 'today' | 'week' | 'month' | 'year' | 'custom'
+let customRangeStart = ''; // ISO date string (yyyy-mm-dd)
+let customRangeEnd = '';   // ISO date string (yyyy-mm-dd)
 let searchQuery = '';
 let currentPage = 1;
 const PAGE_SIZE = 6;
@@ -416,6 +424,10 @@ function render() {
     tab.classList.toggle('active', tab.dataset.filter === currentFilter);
   });
 
+  timeframeChips.forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.timeframe === currentTimeframe);
+  });
+
   const filtered = applyFilter(state.entries);
 
   if (filtered.length === 0) {
@@ -497,11 +509,61 @@ function applyFilter(entries) {
   if (currentFilter === 'pending') result = result.filter(e => e.sent && !e.returned);
   else if (currentFilter === 'done') result = result.filter(e => e.sent && e.returned);
 
+  const range = getTimeframeRange();
+  if (range) {
+    result = result.filter(e => e.createdAt >= range.start.getTime() && e.createdAt < range.end.getTime());
+  }
+
   if (searchQuery) {
     result = result.filter(e => entrySearchText(e).includes(searchQuery));
   }
 
   return result;
+}
+
+// คำนวณช่วงวันที่ (start inclusive, end exclusive) ตาม currentTimeframe ที่เลือกไว้
+// คืนค่า null เมื่อไม่ได้กรองตามช่วงเวลา (เลือก "ทั้งหมด" หรือยังไม่ได้กำหนดช่วงเองครบ)
+function getTimeframeRange() {
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  if (currentTimeframe === 'today') {
+    const start = startOfToday;
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+    return { start, end };
+  }
+
+  if (currentTimeframe === 'week') {
+    const dayOfWeek = startOfToday.getDay(); // 0 = อาทิตย์
+    const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const start = new Date(startOfToday);
+    start.setDate(start.getDate() - diffToMonday);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 7);
+    return { start, end };
+  }
+
+  if (currentTimeframe === 'month') {
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    return { start, end };
+  }
+
+  if (currentTimeframe === 'year') {
+    const start = new Date(now.getFullYear(), 0, 1);
+    const end = new Date(now.getFullYear() + 1, 0, 1);
+    return { start, end };
+  }
+
+  if (currentTimeframe === 'custom' && customRangeStart && customRangeEnd) {
+    const start = isoToDateObj(customRangeStart);
+    const end = isoToDateObj(customRangeEnd);
+    end.setDate(end.getDate() + 1); // รวมวันสุดท้ายด้วย
+    return { start, end };
+  }
+
+  return null;
 }
 
 // รวมข้อความสำหรับค้นหา: ชื่อเรื่อง, รายละเอียด, และวันที่ (สร้าง/ส่งขึ้น/รับลงมา)
@@ -767,6 +829,33 @@ filterTabs.forEach(tab => {
     currentPage = 1;
     render();
   });
+});
+
+// TimeFrame filter
+timeframeChips.forEach(chip => {
+  chip.addEventListener('click', () => {
+    const tf = chip.dataset.timeframe;
+    currentTimeframe = tf;
+    currentPage = 1;
+
+    if (tf === 'custom') {
+      timeframeCustomRange.classList.add('show');
+      // ยังไม่กรองจนกว่าจะเลือกวันที่ครบแล้วกด "ใช้ตัวกรอง"
+      if (!customRangeStart || !customRangeEnd) return;
+    } else {
+      timeframeCustomRange.classList.remove('show');
+    }
+    render();
+  });
+});
+
+timeframeApplyBtn.addEventListener('click', () => {
+  if (!timeframeStart.value || !timeframeEnd.value) return;
+  customRangeStart = timeframeStart.value;
+  customRangeEnd = timeframeEnd.value;
+  currentTimeframe = 'custom';
+  currentPage = 1;
+  render();
 });
 
 // Search bar
