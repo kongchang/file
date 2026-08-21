@@ -67,10 +67,8 @@
           <button class="timeframe-chip" data-timeframe="custom">กำหนดเอง</button>
         </div>
         <div class="timeframe-custom-range" id="timeframeCustomRange">
-          <input type="date" id="timeframeStart" aria-label="วันที่เริ่มต้น" />
-          <span class="timeframe-range-sep">ถึง</span>
-          <input type="date" id="timeframeEnd" aria-label="วันที่สิ้นสุด" />
-          <button type="button" class="timeframe-apply-btn" id="timeframeApplyBtn">ใช้ตัวกรอง</button>
+          <label class="timeframe-date-label" for="timeframeDate">เลือกวันที่</label>
+          <input type="date" id="timeframeDate" class="timeframe-date-input" aria-label="เลือกวันที่" />
         </div>
       </div>
     </div>
@@ -121,6 +119,18 @@
           <button type="submit" class="btn-primary" id="submitBtn">บันทึกแฟ้มใหม่</button>
         </div>
       </form>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="detail-modal-backdrop" id="detailModalBackdrop">
+  <div class="detail-modal">
+    <button class="detail-modal-close" id="detailModalClose" aria-label="ปิด">✕</button>
+    <div class="detail-modal-body" id="detailModalBody"></div>
+    <div class="detail-modal-footer">
+      <button class="edit-btn" id="detailEditBtn">✏️ แก้ไขข้อมูล</button>
+      <button class="delete-btn" id="detailDeleteBtn">🗑️ ลบ</button>
     </div>
   </div>
 </div>

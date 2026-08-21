@@ -42,9 +42,7 @@ const countDone = document.getElementById('countDone');
 const filterTabs = document.querySelectorAll('.filter-tab');
 const timeframeChips = document.querySelectorAll('.timeframe-chip');
 const timeframeCustomRange = document.getElementById('timeframeCustomRange');
-const timeframeStart = document.getElementById('timeframeStart');
-const timeframeEnd = document.getElementById('timeframeEnd');
-const timeframeApplyBtn = document.getElementById('timeframeApplyBtn');
+const timeframeDate = document.getElementById('timeframeDate');
 const searchInput = document.getElementById('searchInput');
 const searchClearBtn = document.getElementById('searchClearBtn');
 const pagination = document.getElementById('pagination');
@@ -52,14 +50,18 @@ const lightbox = document.getElementById('lightbox');
 const lightboxImg = document.getElementById('lightboxImg');
 const lightboxClose = document.getElementById('lightboxClose');
 const connStatus = document.getElementById('connStatus');
+const detailModalBackdrop = document.getElementById('detailModalBackdrop');
+const detailModalBody = document.getElementById('detailModalBody');
+const detailModalClose = document.getElementById('detailModalClose');
+const detailEditBtn = document.getElementById('detailEditBtn');
+const detailDeleteBtn = document.getElementById('detailDeleteBtn');
 
 // ---------- State ----------
 let state = { entries: [] };
 let seqMap = new Map(); // id -> running number, computed each render from createdAt order
 let currentFilter = 'all';
 let currentTimeframe = 'all'; // 'all' | 'today' | 'week' | 'month' | 'year' | 'custom'
-let customRangeStart = ''; // ISO date string (yyyy-mm-dd)
-let customRangeEnd = '';   // ISO date string (yyyy-mm-dd)
+let customDate = ''; // ISO date string (yyyy-mm-dd) เลือกจาก "เลือกวันที่"
 let searchQuery = '';
 let currentPage = 1;
 const PAGE_SIZE = 6;
@@ -614,10 +616,10 @@ function getTimeframeRange() {
     return { start, end };
   }
 
-  if (currentTimeframe === 'custom' && customRangeStart && customRangeEnd) {
-    const start = isoToDateObj(customRangeStart);
-    const end = isoToDateObj(customRangeEnd);
-    end.setDate(end.getDate() + 1); // รวมวันสุดท้ายด้วย
+  if (currentTimeframe === 'custom' && customDate) {
+    const start = isoToDateObj(customDate);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
     return { start, end };
   }
 
@@ -679,7 +681,7 @@ function createFileCard(entry) {
   const returnedDateDisplay = entry.returned && entry.returnedDate ? isoToThaiDate(entry.returnedDate) : '';
 
   return `
-    <div class="file-card">
+    <div class="file-card" data-id="${entry.id}">
       <div style="display: flex; gap: 14px;">
         ${photoHtml}
         <div class="file-header" style="margin: 0; gap: 0;">
@@ -846,6 +848,92 @@ function createTimeframeHtml(entry) {
   `;
 }
 
+// ============ Detail Modal (กดที่แฟ้มเพื่อดู/แก้ไขรายละเอียด) ============
+function openDetailModal(id) {
+  const entry = state.entries.find(x => x.id === id);
+  if (!entry) return;
+
+  let statusText = 'ยังไม่เริ่ม';
+  let statusClass = 'not-started';
+  if (entry.sent && entry.returned) {
+    statusText = 'เสร็จสิ้น';
+    statusClass = 'done';
+  } else if (entry.sent) {
+    statusText = 'รอรับลงมา';
+    statusClass = 'pending';
+  }
+
+  const photoHtml = entry.photo
+    ? `<img class="detail-photo" src="${entry.photo}" alt="รูป: ${escapeHtml(entry.title)}" data-full="${entry.photo}" />`
+    : '';
+
+  const infoItems = [
+    { label: 'รหัสแฟ้ม', value: `#${docCode(entry)}` },
+    { label: 'วันที่สร้าง', value: formatDateTime(entry.createdAt) },
+    { label: 'ส่งขึ้นไปแล้ว', value: entry.sent && entry.sentDate ? isoToThaiDate(entry.sentDate) : 'ยังไม่ส่ง' },
+    { label: 'รับลงมาแล้ว', value: entry.returned && entry.returnedDate ? isoToThaiDate(entry.returnedDate) : 'ยังไม่รับ' }
+  ];
+
+  const infoHtml = infoItems.map(item => `
+    <div class="detail-info-item">
+      <div class="detail-info-label">${item.label}</div>
+      <div class="detail-info-value">${escapeHtml(item.value)}</div>
+    </div>
+  `).join('');
+
+  const noteHtml = entry.desc ? `
+    <div class="detail-note-block">
+      <div class="detail-note-label">รายละเอียดเพิ่มเติม</div>
+      <div class="detail-note-text">${escapeHtml(entry.desc)}</div>
+    </div>
+  ` : '';
+
+  detailModalBody.innerHTML = `
+    <span class="detail-status-badge ${statusClass}">${statusText}</span>
+    <h2 class="detail-modal-title">${escapeHtml(entry.title)}</h2>
+    ${photoHtml}
+    <div class="detail-info-grid">${infoHtml}</div>
+    ${noteHtml}
+  `;
+
+  detailEditBtn.dataset.id = id;
+  detailDeleteBtn.dataset.id = id;
+
+  detailModalBackdrop.classList.add('open');
+}
+
+function closeDetailModal() {
+  detailModalBackdrop.classList.remove('open');
+}
+
+detailModalClose.addEventListener('click', closeDetailModal);
+detailModalBackdrop.addEventListener('click', (e) => {
+  if (e.target === detailModalBackdrop) closeDetailModal();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeDetailModal();
+});
+
+detailEditBtn.addEventListener('click', () => {
+  const id = detailEditBtn.dataset.id;
+  closeDetailModal();
+  openEditForm(id);
+});
+detailDeleteBtn.addEventListener('click', () => {
+  const id = detailDeleteBtn.dataset.id;
+  closeDetailModal();
+  deleteEntry(id);
+});
+
+// รูปในหน้าต่างรายละเอียด กดเพื่อดูรูปขยายได้เช่นกัน
+detailModalBody.addEventListener('click', (e) => {
+  const img = e.target.closest('.detail-photo[data-full]');
+  if (img) {
+    lightboxImg.src = img.dataset.full;
+    lightbox.classList.add('open');
+  }
+});
+
 // ============ Event Delegation ============
 fileList.addEventListener('click', (e) => {
   const img = e.target.closest('.file-photo[data-full]');
@@ -856,24 +944,32 @@ fileList.addEventListener('click', (e) => {
   }
 
   const btn = e.target.closest('[data-action]');
-  if (!btn) return;
+  if (btn) {
+    const action = btn.dataset.action;
+    const id = btn.dataset.id;
+    const type = btn.dataset.type;
 
-  const action = btn.dataset.action;
-  const id = btn.dataset.id;
-  const type = btn.dataset.type;
+    if (action === 'toggle-sent') {
+      toggleStatusWithDatePicker(id, 'sent');
+    } else if (action === 'toggle-returned') {
+      toggleStatusWithDatePicker(id, 'returned');
+    } else if (action === 'save-date') {
+      saveDateForEntry(id, type);
+    } else if (action === 'cancel-date') {
+      cancelDateEdit();
+    } else if (action === 'edit') {
+      openEditForm(id);
+    } else if (action === 'delete') {
+      deleteEntry(id);
+    }
+    return;
+  }
 
-  if (action === 'toggle-sent') {
-    toggleStatusWithDatePicker(id, 'sent');
-  } else if (action === 'toggle-returned') {
-    toggleStatusWithDatePicker(id, 'returned');
-  } else if (action === 'save-date') {
-    saveDateForEntry(id, type);
-  } else if (action === 'cancel-date') {
-    cancelDateEdit();
-  } else if (action === 'edit') {
-    openEditForm(id);
-  } else if (action === 'delete') {
-    deleteEntry(id);
+  // คลิกที่ตัวการ์ดเอง (ไม่ใช่ปุ่ม/รูป/ช่องกรอกวันที่) -> เปิดหน้าต่างรายละเอียดของแฟ้มนั้น
+  if (e.target.closest('input, .date-picker-inline')) return;
+  const card = e.target.closest('.file-card');
+  if (card && card.dataset.id) {
+    openDetailModal(card.dataset.id);
   }
 });
 
@@ -903,8 +999,9 @@ timeframeChips.forEach(chip => {
 
     if (tf === 'custom') {
       timeframeCustomRange.classList.add('show');
-      // ยังไม่กรองจนกว่าจะเลือกวันที่ครบแล้วกด "ใช้ตัวกรอง"
-      if (!customRangeStart || !customRangeEnd) return;
+      setTimeout(() => timeframeDate.focus(), 0);
+      // ยังไม่กรองจนกว่าจะเลือกวันที่
+      if (!customDate) return;
     } else {
       timeframeCustomRange.classList.remove('show');
     }
@@ -912,10 +1009,9 @@ timeframeChips.forEach(chip => {
   });
 });
 
-timeframeApplyBtn.addEventListener('click', () => {
-  if (!timeframeStart.value || !timeframeEnd.value) return;
-  customRangeStart = timeframeStart.value;
-  customRangeEnd = timeframeEnd.value;
+timeframeDate.addEventListener('change', () => {
+  if (!timeframeDate.value) return;
+  customDate = timeframeDate.value;
   currentTimeframe = 'custom';
   currentPage = 1;
   render();
