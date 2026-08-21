@@ -323,9 +323,72 @@ function cancelDateEdit() {
 }
 
 function deleteEntry(id) {
-  if (confirm('ลบแฟ้มนี้?')) {
-    removeEntry(id);
+  // Show custom confirm dialog with animation
+  showDeleteConfirmDialog(id);
+}
+
+function showDeleteConfirmDialog(id) {
+  // Create custom confirm dialog
+  const backdrop = document.createElement('div');
+  backdrop.className = 'delete-confirm-backdrop';
+  backdrop.innerHTML = `
+    <div class="delete-confirm-dialog">
+      <div class="delete-confirm-icon">🗑️</div>
+      <h3 class="delete-confirm-title">ลบแฟ้มนี้?</h3>
+      <p class="delete-confirm-text">การกระทำนี้ไม่สามารถยกเลิกได้</p>
+      <div class="delete-confirm-actions">
+        <button class="delete-confirm-cancel">ยกเลิก</button>
+        <button class="delete-confirm-ok">ลบแฟ้ม</button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(backdrop);
+  
+  // Trigger animation
+  requestAnimationFrame(() => {
+    backdrop.classList.add('show');
+  });
+  
+  const cancelBtn = backdrop.querySelector('.delete-confirm-cancel');
+  const okBtn = backdrop.querySelector('.delete-confirm-ok');
+  
+  function closeDialog() {
+    backdrop.classList.remove('show');
+    setTimeout(() => {
+      backdrop.remove();
+    }, 300);
   }
+  
+  cancelBtn.addEventListener('click', closeDialog);
+  
+  okBtn.addEventListener('click', async () => {
+    // Add deleting animation to the card
+    const card = document.querySelector(`[data-action="delete"][data-id="${id}"]`).closest('.file-card');
+    card.classList.add('deleting');
+    
+    // Close dialog
+    closeDialog();
+    
+    // Wait for animation to complete
+    await new Promise(resolve => setTimeout(resolve, 400));
+    
+    // Delete the entry
+    removeEntry(id);
+  });
+  
+  // Close on backdrop click
+  backdrop.addEventListener('click', (e) => {
+    if (e.target === backdrop) closeDialog();
+  });
+  
+  // Close on escape key
+  document.addEventListener('keydown', function handleEscape(e) {
+    if (e.key === 'Escape') {
+      closeDialog();
+      document.removeEventListener('keydown', handleEscape);
+    }
+  });
 }
 
 // ============ Rendering ============
@@ -552,6 +615,8 @@ function createFileCard(entry) {
           <button class="delete-btn" data-action="delete" data-id="${entry.id}">ลบ</button>
         </div>
       </div>
+
+      ${createTimeframeHtml(entry)}
     </div>
   `;
 }
@@ -576,6 +641,86 @@ function isoToThaiDate(isoStr) {
   const [year, month, day] = isoStr.split('-');
   const d = new Date(year, parseInt(month) - 1, day);
   return d.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+// ============ TimeFrame Helper Functions ============
+function getDaysDiff(dateStr) {
+  if (!dateStr) return null;
+  const date = dateStr instanceof Date ? dateStr : new Date(dateStr);
+  const today = new Date();
+  const diffMs = today - date;
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  return diffDays;
+}
+
+function formatTimeframe(days) {
+  if (days === null || days === undefined) return '-';
+  if (days === 0) return 'วันนี้';
+  if (days === 1) return 'เมื่อวาน';
+  if (days < 7) return `${days} วัน`;
+  const weeks = Math.floor(days / 7);
+  if (weeks < 4) return `${weeks} สัปดาห์`;
+  const months = Math.floor(days / 30);
+  return `${months} เดือน`;
+}
+
+function createTimeframeHtml(entry) {
+  const createdDays = getDaysDiff(entry.createdAt);
+  const sentDays = entry.sentDate ? getDaysDiff(new Date(entry.sentDate + 'T00:00:00')) : null;
+  const returnedDays = entry.returnedDate ? getDaysDiff(new Date(entry.returnedDate + 'T00:00:00')) : null;
+
+  const createdLabel = formatTimeframe(createdDays);
+  const sentLabel = sentDays !== null ? formatTimeframe(sentDays) : '-';
+  const returnedLabel = returnedDays !== null ? formatTimeframe(returnedDays) : '-';
+
+  const timelineHtml = `
+    <div class="timeline">
+      <div class="timeline-node completed">
+        <div class="timeline-dot">✓</div>
+        <div class="timeline-label">สร้าง</div>
+        <div class="timeline-time">${createdLabel}</div>
+      </div>
+      <div class="timeline-node ${entry.sent ? 'completed' : 'pending'}">
+        <div class="timeline-dot ${!entry.sent ? 'pending' : ''}">
+          ${entry.sent ? '✓' : '◎'}
+        </div>
+        <div class="timeline-label">ส่งขึ้นไป</div>
+        <div class="timeline-time">${sentLabel}</div>
+      </div>
+      <div class="timeline-node ${entry.returned ? 'completed' : 'pending'}">
+        <div class="timeline-dot ${!entry.returned ? 'pending' : ''}">
+          ${entry.returned ? '✓' : '◎'}
+        </div>
+        <div class="timeline-label">รับลงมา</div>
+        <div class="timeline-time">${returnedLabel}</div>
+      </div>
+    </div>
+  `;
+
+  const detailHtml = `
+    <div class="timeframe-detail">
+      <div class="timeframe-item">
+        <div class="timeframe-item-label">สร้าง</div>
+        <div class="timeframe-item-value">${createdLabel}</div>
+      </div>
+      <div class="timeframe-item ${entry.sent ? 'active' : 'pending'}">
+        <div class="timeframe-item-label">${entry.sent ? 'ส่ง' : 'รอส่ง'}</div>
+        <div class="timeframe-item-value">${sentLabel}</div>
+      </div>
+      <div class="timeframe-item ${entry.returned ? 'active' : 'pending'}">
+        <div class="timeframe-item-label">${entry.returned ? 'รับ' : 'รอรับ'}</div>
+        <div class="timeframe-item-value">${returnedLabel}</div>
+      </div>
+    </div>
+  `;
+
+  return `
+    <div class="file-timeframe">
+      <div class="timeframe-label">⏱️ ระยะเวลา</div>
+      ${timelineHtml}
+      ${detailHtml}
+    </div>
+  `;
 }
 
 // ============ Event Delegation ============

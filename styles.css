@@ -86,17 +86,6 @@
   a, button, input, textarea{ font-family: inherit; }
 
   /* ---------- Top bar ---------- */
-  @keyframes topbarSlide {
-    from {
-      opacity: 0;
-      transform: translateY(-8px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
   .topbar{
     background: var(--navy);
     color: #fff;
@@ -105,7 +94,6 @@
     position: sticky;
     top: 0;
     z-index: 100;
-    animation: topbarSlide 0.5s ease-out;
     box-shadow: 0 2px 8px rgba(20, 36, 64, 0.1);
   }
   .topbar-inner{
@@ -130,11 +118,7 @@
     display:flex; align-items:center; justify-content:center;
     flex: 0 0 auto;
     font-size: 18px;
-    transition: all 0.3s ease;
-  }
-  .brand-mark:hover{
-    background: rgba(255,255,255,0.15);
-    transform: scale(1.1) rotate(5deg);
+    cursor: pointer;
   }
   
   .brand-text h1{
@@ -148,15 +132,6 @@
     gap: 8px;
   }
   
-  @keyframes navBtnActive {
-    from {
-      transform: scale(0.95);
-    }
-    to {
-      transform: scale(1);
-    }
-  }
-  
   .nav-btn{
     background: rgba(255,255,255,0.15);
     color: #fff;
@@ -166,38 +141,18 @@
     cursor: pointer;
     font-size: 13px;
     font-weight: 500;
-    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-    position: relative;
-    overflow: hidden;
-  }
-  .nav-btn::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
-    transform: translate(-50%, -50%);
-    transition: width 0.5s, height 0.5s;
-  }
-  .nav-btn:active::before {
-    width: 300px;
-    height: 300px;
+    transition: background 0.2s, border-color 0.2s;
   }
   
   .nav-btn:hover{
     background: rgba(255,255,255,0.25);
     border-color: rgba(255,255,255,0.35);
-    transform: translateY(-1px);
   }
   .nav-btn.active{
     background: #fff;
     color: var(--navy);
     font-weight: 600;
-    animation: navBtnActive 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   }
 
   /* ---------- Stat cards ---------- */
@@ -798,6 +753,155 @@
     border-top: 1px solid var(--border);
   }
 
+  /* ============ TimeFrame Timeline ============ */
+  @keyframes timelineNodePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+  }
+  
+  .file-timeframe {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  
+  .timeframe-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 10px;
+  }
+  
+  .timeline {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    position: relative;
+  }
+  
+  .timeline-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    position: relative;
+  }
+  
+  .timeline-node::after {
+    content: '';
+    position: absolute;
+    top: 16px;
+    left: calc(50% + 12px);
+    width: calc(100% - 24px);
+    height: 2px;
+    background: var(--border);
+  }
+  
+  .timeline-node:last-child::after {
+    display: none;
+  }
+  
+  .timeline-node.active::after {
+    background: var(--green);
+  }
+  
+  .timeline-dot {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--surface-alt);
+    border: 2px solid var(--border-strong);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 2;
+  }
+  
+  .timeline-node.completed .timeline-dot {
+    background: var(--green);
+    border-color: var(--green);
+    color: #fff;
+    box-shadow: 0 0 0 2px rgba(47, 134, 89, 0.1);
+    animation: timelineNodePulse 2s ease-in-out infinite;
+  }
+  
+  .timeline-dot.pending {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #fff;
+  }
+  
+  .timeline-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-top: 4px;
+  }
+  
+  .timeline-time {
+    font-size: 10px;
+    color: var(--text-faint);
+    text-align: center;
+    min-height: 14px;
+  }
+  
+  .timeframe-detail {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 12px;
+  }
+  
+  .timeframe-item {
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+  
+  .timeframe-item.active {
+    background: var(--green-bg);
+    border-color: var(--green);
+  }
+  
+  .timeframe-item.pending {
+    background: var(--gold-bg);
+    border-color: var(--gold);
+  }
+  
+  .timeframe-item-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+  }
+  
+  .timeframe-item-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  
+  .timeframe-item.active .timeframe-item-value {
+    color: var(--green);
+  }
+  
+  .timeframe-item.pending .timeframe-item-value {
+    color: var(--gold);
+  }
+
   @keyframes statusItemHover {
     from {
       transform: translateX(0);
@@ -1059,6 +1163,177 @@
     font-size: 13px;
     color: var(--text-secondary);
     margin: 0;
+  }
+
+  /* ---------- Delete Animation ---------- */
+  @keyframes cardSlideOut {
+    from {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: translateX(-100%) scale(0.9);
+    }
+  }
+  
+  .file-card.deleting {
+    animation: cardSlideOut 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    pointer-events: none;
+  }
+
+  /* ---------- Delete Confirm Dialog ---------- */
+  @keyframes backdropFade {
+    from {
+      opacity: 0;
+      backdrop-filter: blur(0px);
+    }
+    to {
+      opacity: 1;
+      backdrop-filter: blur(4px);
+    }
+  }
+  
+  @keyframes dialogBounce {
+    from {
+      opacity: 0;
+      transform: scale(0.85) translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+  
+  @keyframes shakeNo {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+  
+  .delete-confirm-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0);
+    backdrop-filter: blur(0px);
+    z-index: 300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    transition: opacity 0.3s ease;
+  }
+  
+  .delete-confirm-backdrop.show {
+    animation: backdropFade 0.3s ease-out forwards;
+  }
+  
+  .delete-confirm-dialog {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 32px 24px;
+    max-width: 320px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    opacity: 0;
+    transform: scale(0.85) translateY(-20px);
+  }
+  
+  .delete-confirm-backdrop.show .delete-confirm-dialog {
+    animation: dialogBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+  
+  .delete-confirm-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    display: inline-block;
+    animation: swing 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+  
+  @keyframes swing {
+    0% { transform: rotate(-10deg); opacity: 0; }
+    50% { transform: rotate(5deg); }
+    100% { transform: rotate(0deg); opacity: 1; }
+  }
+  
+  .delete-confirm-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 8px;
+    color: var(--text-primary);
+  }
+  
+  .delete-confirm-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin: 0 0 24px;
+  }
+  
+  .delete-confirm-actions {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .delete-confirm-cancel,
+  .delete-confirm-ok {
+    flex: 1;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    animation: slideUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+  
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .delete-confirm-cancel {
+    animation-delay: 0.1s;
+    background: var(--surface-alt);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+  }
+  
+  .delete-confirm-cancel:hover {
+    background: var(--surface-alt);
+    border-color: var(--border-strong);
+    transform: translateY(-1px);
+  }
+  
+  .delete-confirm-cancel:active {
+    transform: translateY(0);
+  }
+  
+  .delete-confirm-ok {
+    animation-delay: 0.2s;
+    background: var(--red);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(196, 69, 59, 0.2);
+  }
+  
+  .delete-confirm-ok:hover {
+    background: #b73831;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(196, 69, 59, 0.3);
+  }
+  
+  .delete-confirm-ok:active {
+    transform: translateY(0);
   }
 
   /* ---------- Lightbox ---------- */
