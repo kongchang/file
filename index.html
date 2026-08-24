@@ -56,7 +56,7 @@
         <span class="search-icon">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         </span>
-        <input type="text" class="search-input" id="searchInput" placeholder="ค้นหาชื่อแฟ้ม, รายละเอียด หรือวันที่/เดือน/ปี..." />
+        <input type="text" class="search-input" id="searchInput" placeholder="ค้นหาชื่อแฟ้ม, รายละเอียด หรือวันที่/เดือน/ปี..." autocomplete="off" />
         <button class="search-clear-btn" id="searchClearBtn" type="button" aria-label="ล้างคำค้นหา">✕</button>
       </div>
       <div class="filter-tabs">
@@ -99,15 +99,15 @@
   <div class="panel">
     <div class="panel-header" id="addFileHeader">เพิ่มแฟ้มใหม่</div>
     <div class="panel-body">
-      <form id="addFileForm">
+      <form id="addFileForm" autocomplete="off">
         <div class="form-group">
           <label class="form-label">ชื่อเรื่องหรือชื่อแฟ้ม</label>
-          <input type="text" id="titleInput" class="form-input" placeholder="เช่น คำร้องขอ กำหนดการ ใบรับรอง ฯลฯ" maxlength="120" required>
+          <input type="text" id="titleInput" class="form-input" placeholder="เช่น คำร้องขอ กำหนดการ ใบรับรอง ฯลฯ" maxlength="120" autocomplete="off" required>
         </div>
 
         <div class="form-group">
           <label class="form-label">รายละเอียดเพิ่มเติม (ไม่บังคับ)</label>
-          <textarea id="descInput" class="form-textarea" placeholder="เพิ่มรายละเอียดอื่นๆ เช่น ผู้มอบ ตำแหน่ง ฯลฯ" maxlength="300"></textarea>
+          <textarea id="descInput" class="form-textarea" placeholder="เพิ่มรายละเอียดอื่นๆ เช่น ผู้มอบ ตำแหน่ง ฯลฯ" maxlength="300" autocomplete="off"></textarea>
         </div>
 
         <div class="form-group">
