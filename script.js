@@ -150,9 +150,15 @@ function startEntriesSync() {
   if (!entriesCol || unsubscribeEntries) return;
   const entriesQuery = query(entriesCol, orderBy('createdAt', 'desc'));
   unsubscribeEntries = onSnapshot(entriesQuery, (snapshot) => {
-    state.entries = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-    hideConnMessage();
-    render();
+    try {
+      state.entries = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      hideConnMessage();
+      render();
+    } catch (err) {
+      // กันหน้าจอขาวทั้งหน้า: ถ้า render พังจากข้อมูลผิดปกติ ให้แจ้งเตือนแทนที่จะปล่อยให้แครช
+      console.error('Render error (ข้อมูลแฟ้มอาจผิดรูปแบบ):', err);
+      showConnMessage('⚠️ แสดงผลข้อมูลไม่สำเร็จ — ข้อมูลบางรายการอาจผิดรูปแบบ (ดู Console สำหรับรายละเอียด)', true);
+    }
   }, (err) => {
     console.error('Firestore sync error:', err);
     showConnMessage('⚠️ เชื่อมต่อ Firestore ไม่สำเร็จ — ตรวจสอบ Firestore Rules และการตั้งค่าโปรเจกต์', true);
@@ -891,7 +897,8 @@ function createFileCard(entry) {
 }
 
 function escapeHtml(s) {
-  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
 function docCode(entry) {
