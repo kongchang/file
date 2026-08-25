@@ -4,10 +4,65 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
 import {
+  getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut
+} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+import {
   getFirestore, collection, addDoc, updateDoc, deleteDoc, doc,
   onSnapshot, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 import { firebaseConfig } from './firebase-config.js';
+
+// ============ Login Gate (Firebase Authentication) ============
+// username ของเจ้าหน้าที่จะถูกแปลงเป็นอีเมลหลอกสำหรับ Firebase Auth (Email/Password)
+// ต้องสร้างผู้ใช้นี้ไว้ใน Firebase Console > Authentication > Users ก่อนใช้งานจริง
+const STAFF_EMAIL_DOMAIN = 'staff.kongchangfile.app';
+function usernameToEmail(username) {
+  return `${username.trim().toLowerCase()}@${STAFF_EMAIL_DOMAIN}`;
+}
+
+const loginPage = document.getElementById('login-page');
+const appRoot = document.getElementById('appRoot');
+const loginForm = document.getElementById('loginForm');
+const loginUsername = document.getElementById('loginUsername');
+const loginPassword = document.getElementById('loginPassword');
+const loginError = document.getElementById('loginError');
+const loginErrorText = document.getElementById('loginErrorText');
+const loginTogglePw = document.getElementById('loginTogglePw');
+const loginSubmitBtn = document.getElementById('loginSubmitBtn');
+const loginSubmitText = document.getElementById('loginSubmitText');
+const logoutBtn = document.getElementById('logoutBtn');
+
+function showApp() {
+  loginPage.classList.remove('active');
+  appRoot.classList.add('show');
+}
+
+function showLoginScreen() {
+  appRoot.classList.remove('show');
+  loginPage.classList.add('active');
+  setTimeout(() => loginUsername.focus(), 50);
+}
+
+function showLoginError(msg) {
+  loginErrorText.textContent = msg;
+  loginError.classList.remove('show');
+  void loginError.offsetWidth; // reset animation
+  loginError.classList.add('show');
+}
+
+function setLoginLoading(isLoading) {
+  loginSubmitBtn.disabled = isLoading;
+  loginSubmitBtn.classList.toggle('loading', isLoading);
+  loginSubmitText.textContent = isLoading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ';
+}
+
+loginTogglePw.addEventListener('click', () => {
+  const isPw = loginPassword.type === 'password';
+  loginPassword.type = isPw ? 'text' : 'password';
+});
+
+// การส่งฟอร์มและปุ่มออกจากระบบถูกผูกไว้ในส่วน Firebase setup ด้านล่าง
+// (ต้องรอให้ auth พร้อมใช้งานก่อน)
 
 const CHECK_SVG = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13.5 4L6 11.5L2.5 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const EDIT_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16.474 5.408a2.5 2.5 0 0 1 3.536 3.536L7.5 21.454 3 22l.546-4.5L16.474 5.408Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>';
@@ -85,30 +140,95 @@ function hideConnMessage() {
   connStatus.hidden = true;
 }
 
-// ============ Firebase setup ============
+// ============ Firebase setup (Auth + Firestore) ============
+let auth = null;
 let db = null;
 let entriesCol = null;
+let unsubscribeEntries = null;
+
+function startEntriesSync() {
+  if (!entriesCol || unsubscribeEntries) return;
+  const entriesQuery = query(entriesCol, orderBy('createdAt', 'desc'));
+  unsubscribeEntries = onSnapshot(entriesQuery, (snapshot) => {
+    state.entries = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    hideConnMessage();
+    render();
+  }, (err) => {
+    console.error('Firestore sync error:', err);
+    showConnMessage('⚠️ เชื่อมต่อ Firestore ไม่สำเร็จ — ตรวจสอบ Firestore Rules และการตั้งค่าโปรเจกต์', true);
+  });
+}
+
+function stopEntriesSync() {
+  if (unsubscribeEntries) {
+    unsubscribeEntries();
+    unsubscribeEntries = null;
+  }
+  state.entries = [];
+}
 
 if (firebaseConfig.apiKey === 'YOUR_API_KEY') {
   showConnMessage('⚠️ ยังไม่ได้ตั้งค่า Firebase — แก้ไขไฟล์ firebase-config.js ด้วยค่าโปรเจกต์ของคุณ แล้วรีเฟรชหน้านี้', true);
+  showLoginScreen();
 } else {
   try {
     const app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
     db = getFirestore(app);
     entriesCol = collection(db, 'entries');
-    const entriesQuery = query(entriesCol, orderBy('createdAt', 'desc'));
 
-    onSnapshot(entriesQuery, (snapshot) => {
-      state.entries = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      hideConnMessage();
-      render();
-    }, (err) => {
-      console.error('Firestore sync error:', err);
-      showConnMessage('⚠️ เชื่อมต่อ Firestore ไม่สำเร็จ — ตรวจสอบ Firestore Rules และการตั้งค่าโปรเจกต์', true);
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        showApp();
+        startEntriesSync();
+      } else {
+        stopEntriesSync();
+        showLoginScreen();
+      }
+    });
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const enteredUser = loginUsername.value.trim();
+      const enteredPass = loginPassword.value;
+      if (!enteredUser || !enteredPass) return;
+
+      setLoginLoading(true);
+      try {
+        await signInWithEmailAndPassword(auth, usernameToEmail(enteredUser), enteredPass);
+        loginError.classList.remove('show');
+        loginForm.reset();
+        // onAuthStateChanged จะจัดการเปิดหน้าแอปให้เอง
+      } catch (err) {
+        console.error('Login failed:', err);
+        const code = err && err.code;
+        let msg = 'เข้าสู่ระบบไม่สำเร็จ ลองใหม่อีกครั้ง';
+        if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found' || code === 'auth/invalid-email') {
+          msg = 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
+        } else if (code === 'auth/too-many-requests') {
+          msg = 'ลองผิดหลายครั้งเกินไป กรุณารอสักครู่แล้วลองใหม่';
+        } else if (code === 'auth/network-request-failed') {
+          msg = 'เชื่อมต่อเครือข่ายไม่สำเร็จ ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่';
+        }
+        showLoginError(msg);
+        loginPassword.value = '';
+        loginPassword.focus();
+      } finally {
+        setLoginLoading(false);
+      }
+    });
+
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        await signOut(auth);
+      } catch (err) {
+        console.error('Logout failed:', err);
+      }
     });
   } catch (err) {
     console.error('Firebase init error:', err);
     showConnMessage('⚠️ ตั้งค่า Firebase ไม่ถูกต้อง — ตรวจสอบไฟล์ firebase-config.js', true);
+    showLoginScreen();
   }
 }
 
