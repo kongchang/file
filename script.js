@@ -72,7 +72,7 @@ const DOC_SVG = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xml
 const CLOCK_SVG = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:-2px; margin-right:3px;"><circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="1.8"/><path d="M12 9V13L15 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.5 2.5H14.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
 
 // ---------- Elements ----------
-const navBtns = document.querySelectorAll('.nav-btn');
+const navBtns = document.querySelectorAll('.nav-btn[data-page]'); // ไม่รวมปุ่มออกจากระบบ (ไม่มี data-page อยู่แล้ว มี logoutBtn.addEventListener แยกต่างหาก)
 const pages = document.querySelectorAll('.page');
 
 const addFileHeader = document.getElementById('addFileHeader');
@@ -296,8 +296,13 @@ navBtns.forEach(btn => {
 });
 
 function switchPage(pageId) {
+  const target = document.getElementById(pageId);
+  if (!target) {
+    console.warn('switchPage: ไม่พบหน้า', pageId); // กันหน้าจอขาวทั้งหน้าเผื่อมี id ไม่ตรงอีกในอนาคต
+    return;
+  }
   pages.forEach(p => p.classList.remove('active'));
-  document.getElementById(pageId).classList.add('active');
+  target.classList.add('active');
 }
 
 // ============ Add / Edit form mode helpers ============
