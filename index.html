@@ -2,7 +2,10 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ติดตามแฟ้ม">
 <title>ระบบติดตามแฟ้มเอกสาร</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -64,7 +67,7 @@
         <p class="login-visual-text">ลดขั้นตอนซ้ำซ้อน ติดตามสถานะแฟ้มได้แบบเรียลไทม์ และบริหารจัดการงานเอกสารได้อย่างเป็นระบบในที่เดียว</p>
       </div>
     </div>
-
+    
     <!-- Right: form panel -->
     <div class="login-panel">
       <div class="login-panel-inner">
@@ -130,10 +133,22 @@
     </div>
     <div class="topbar-nav">
       <button class="nav-btn active" data-page="dashboard">Dashboard</button>
-      <button class="nav-btn" data-page="add-file">+ เพิ่มแฟ้มใหม่</button>
+      <button class="nav-btn" data-page="add-file">เพิ่มแฟ้มใหม่</button>
       <button class="nav-btn logout-btn" id="logoutBtn" title="ออกจากระบบ">ออกจากระบบ</button>
     </div>
+    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="เมนู">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
   </div>
+</div>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobileMenu">
+  <button class="mobile-menu-item" data-page="dashboard">Dashboard</button>
+  <button class="mobile-menu-item" data-page="add-file">เพิ่มแฟ้มใหม่</button>
+  <button class="mobile-menu-item logout-btn" id="logoutBtnMobile">ออกจากระบบ</button>
 </div>
 
 <!-- ============ Dashboard Page ============ -->
@@ -159,7 +174,7 @@
         <span class="search-icon">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         </span>
-        <input type="text" class="search-input" id="searchInput" placeholder="ค้นหาชื่อแฟ้ม, รายละเอียด หรือวันที่/เดือน/ปี..." autocomplete="off" />
+        <input type="text" class="search-input" id="searchInput" placeholder="ค้นหาชื่อแฟ้ม..." autocomplete="off" />
         <button class="search-clear-btn" id="searchClearBtn" type="button" aria-label="ล้างคำค้นหา">✕</button>
       </div>
       <div class="filter-tabs">
