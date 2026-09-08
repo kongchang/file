@@ -2001,36 +2001,6 @@
     transform: scale(0.95);
   }
 
-  /* ---------- Panel Header with Back Button ---------- */
-  .panel-header-with-back {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-  }
-  
-  .back-btn {
-    padding: 6px 12px;
-    background: var(--surface-alt);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--text-secondary);
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    white-space: nowrap;
-  }
-  
-  .back-btn:hover {
-    background: var(--border);
-    color: var(--navy-soft);
-  }
-  
-  .back-btn:active {
-    transform: scale(0.95);
-  }
-
   @media (max-width: 480px) {
     .stats-row{ grid-template-columns: 1fr; }
     .file-status{ grid-template-columns: 1fr; }

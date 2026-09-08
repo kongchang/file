@@ -76,13 +76,9 @@ const navBtns = document.querySelectorAll('.nav-btn:not(.logout-btn)');
 const pages = document.querySelectorAll('.page');
 
 const addFileHeader = document.getElementById('addFileHeader');
-const backFromEditBtn = document.getElementById('backFromEditBtn');
-const dateEditFields = document.getElementById('dateEditFields');
 const form = document.getElementById('addFileForm');
 const titleInput = document.getElementById('titleInput');
 const descInput = document.getElementById('descInput');
-const sentDateInput = document.getElementById('sentDateInput');
-const returnedDateInput = document.getElementById('returnedDateInput');
 const photoInput = document.getElementById('photoInput');
 const photoUploadBox = document.getElementById('photoUploadBox');
 const photoPreview = document.getElementById('photoPreview');
@@ -314,14 +310,10 @@ function resetFormToAddMode() {
   editingEntryId = null;
   titleInput.value = '';
   descInput.value = '';
-  sentDateInput.value = '';
-  returnedDateInput.value = '';
   pendingPhoto = null;
   pendingPhotoFile = null;
   photoInput.value = '';
   photoPreview.classList.remove('show');
-  dateEditFields.style.display = 'none';
-  backFromEditBtn.style.display = 'none';
   addFileHeader.textContent = 'เพิ่มแฟ้มใหม่';
   submitBtn.textContent = 'บันทึกแฟ้มใหม่';
 }
@@ -333,8 +325,6 @@ function openEditForm(id) {
   editingEntryId = id;
   titleInput.value = entry.title || '';
   descInput.value = entry.desc || '';
-  sentDateInput.value = entry.sentDate || '';
-  returnedDateInput.value = entry.returnedDate || '';
 
   if (entry.photo) {
     pendingPhoto = entry.photo;
@@ -349,8 +339,6 @@ function openEditForm(id) {
 
   addFileHeader.textContent = 'แก้ไขแฟ้ม';
   submitBtn.textContent = 'บันทึกการแก้ไข';
-  dateEditFields.style.display = 'block';
-  backFromEditBtn.style.display = 'inline-block';
 
   switchPage('add-file-page');
   navBtns.forEach(b => b.classList.remove('active'));
@@ -425,19 +413,6 @@ removePhotoBtn.addEventListener('click', (e) => {
   photoPreview.classList.remove('show');
 });
 
-// ============ Back Button Handler ============
-backFromEditBtn.addEventListener('click', (e) => {
-  e.preventDefault();
-  resetFormToAddMode();
-  // Show the detail modal of the entry being edited
-  if (editingEntryId) {
-    const entry = state.entries.find(x => x.id === editingEntryId);
-    if (entry) {
-      showDetailModal(editingEntryId);
-    }
-  }
-});
-
 // ============ Form Submit (เพิ่มแฟ้มใหม่ / แก้ไขแฟ้ม) ============
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -451,25 +426,11 @@ form.addEventListener('submit', async (e) => {
 
   let ok;
   if (isEditing) {
-    const updateData = {
+    ok = await updateEntry(editingEntryId, {
       title: title,
       desc: descInput.value.trim(),
       photo: pendingPhoto
-    };
-    
-    // Update sent date if provided
-    if (sentDateInput.value) {
-      updateData.sentDate = sentDateInput.value;
-      updateData.sent = true;
-    }
-    
-    // Update returned date if provided
-    if (returnedDateInput.value) {
-      updateData.returnedDate = returnedDateInput.value;
-      updateData.returned = true;
-    }
-    
-    ok = await updateEntry(editingEntryId, updateData);
+    });
   } else {
     ok = await addEntry({
       title: title,
