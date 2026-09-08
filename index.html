@@ -200,7 +200,10 @@
 <!-- ============ Add File Page ============ -->
 <div id="add-file-page" class="page">
   <div class="panel">
-    <div class="panel-header" id="addFileHeader">เพิ่มแฟ้มใหม่</div>
+    <div class="panel-header-with-back">
+      <span id="addFileHeader">เพิ่มแฟ้มใหม่</span>
+      <button type="button" class="back-btn" id="backFromEditBtn" style="display: none;" title="ย้อนกลับ">← ย้อนกลับ</button>
+    </div>
     <div class="panel-body">
       <form id="addFileForm" autocomplete="off">
         <div class="form-group">
@@ -227,6 +230,18 @@
             <img class="preview-img" id="previewImg" alt="ตัวอย่างรูป" />
             <p class="preview-name" id="previewName"></p>
             <button type="button" class="remove-photo-btn" id="removePhotoBtn">ลบรูป</button>
+          </div>
+        </div>
+
+        <!-- Date fields for editing -->
+        <div id="dateEditFields" style="display: none;">
+          <div class="form-group">
+            <label class="form-label">วันที่ส่ง (ไม่บังคับ)</label>
+            <input type="date" id="sentDateInput" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">วันที่รับลงมา (ไม่บังคับ)</label>
+            <input type="date" id="returnedDateInput" class="form-input" />
           </div>
         </div>
 
